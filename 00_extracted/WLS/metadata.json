@@ -1,0 +1,21 @@
+{
+  "source_pdf": "00_inbox/WLS.pdf",
+  "title": "Doppler-Aided Positioning for Fused LEO Navigation Systems",
+  "year": "2023",
+  "authors": [
+    "Weiwei Wang",
+    "Zhangjian Lu",
+    "Ye Tian",
+    "Lang Bian",
+    "Guoyong Wang",
+    "Lixin Zhang"
+  ],
+  "keywords": [
+    "Doppler-aided positioning",
+    "fused LEO navigation systems",
+    "weighted least squares"
+  ],
+  "rough_topic": "融合LEO导航系统中的伪距-多普勒联合定位",
+  "extraction_quality": "high",
+  "page_count": 14
+}
