@@ -1,2 +1,0 @@
-
-# SELECTED IDEAS
