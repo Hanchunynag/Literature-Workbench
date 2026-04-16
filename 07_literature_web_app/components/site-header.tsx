@@ -2,7 +2,8 @@ import Link from "next/link";
 
 const navItems = [
   { href: "/", label: "首页" },
-  { href: "/library", label: "文献库" }
+  { href: "/library", label: "文献库" },
+  { href: "/upload", label: "上传论文" }
 ];
 
 export function SiteHeader() {

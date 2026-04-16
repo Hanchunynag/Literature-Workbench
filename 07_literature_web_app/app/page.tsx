@@ -35,8 +35,11 @@ export default function HomePage() {
           </p>
 
           <div className="hero-actions">
-            <Link className="primary-button" href="/library">
-              进入文献库
+            <Link className="primary-button" href="/upload">
+              上传论文
+            </Link>
+            <Link className="secondary-button" href="/library">
+              浏览文献库
             </Link>
             {featuredPaper ? (
               <Link className="secondary-button" href={`/papers/${featuredPaper.id}`}>
@@ -61,7 +64,7 @@ export default function HomePage() {
           </div>
           <div className="hero-note">
             <p className="section-label">Site Direction</p>
-            <p>只保留内容展示、筛选和阅读动线，不再承载本地上传、处理或脚本管理。</p>
+            <p>保留网站内上传入口与浏览阅读体验，但不再承载本地脚本管理、分类链路或处理编排。</p>
           </div>
         </div>
       </section>
