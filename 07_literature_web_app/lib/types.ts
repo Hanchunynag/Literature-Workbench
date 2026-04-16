@@ -1,9 +1,3 @@
-export type PaperStatus =
-  | "processed"
-  | "uploading"
-  | "needs_review"
-  | "duplicate";
-
 export type Paper = {
   id: string;
   title: string;
@@ -21,7 +15,6 @@ export type Paper = {
   usefulToMyTopic: string[];
   limitations: string[];
   candidateIdeas: string[];
-  status: PaperStatus;
 };
 
 export type TopicSnapshot = {

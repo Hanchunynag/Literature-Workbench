@@ -2,8 +2,7 @@ import Link from "next/link";
 
 const navItems = [
   { href: "/", label: "首页" },
-  { href: "/library", label: "文献库" },
-  { href: "/upload", label: "上传处理" }
+  { href: "/library", label: "文献库" }
 ];
 
 export function SiteHeader() {
@@ -14,7 +13,7 @@ export function SiteHeader() {
           <span className="brand-badge">LW</span>
           <div>
             <p>Literature Workbench</p>
-            <span>个人文献工作台</span>
+            <span>LEO SOP research atlas</span>
           </div>
         </Link>
 

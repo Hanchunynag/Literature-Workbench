@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Literature Workbench",
-  description: "上传即处理、可扩展分类的个人文献工作台"
+  description: "面向 LEO SOP 研究的文献展示与阅读网站"
 };
 
 export default function RootLayout({

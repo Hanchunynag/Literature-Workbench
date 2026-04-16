@@ -4,27 +4,45 @@ import { PaperCard } from "@/components/paper-card";
 import { TagPill } from "@/components/tag-pill";
 import { getLibraryStats, papers, topicSnapshot } from "@/lib/mock-data";
 
+const collectionSignals = [
+  {
+    title: "Method-first curation",
+    body: "把文献按定位方法、轨道误差建模和多星座观测组织，先突出问题结构，再进入单篇细读。"
+  },
+  {
+    title: "Research-facing language",
+    body: "页面更像研究展厅而不是上传后台，强调主题脉络、贡献边界与可延展问题。"
+  },
+  {
+    title: "Fast scanning rhythm",
+    body: "首页负责建立全局认知，文献库负责快速切换视角，详情页负责承接深入阅读。"
+  }
+];
+
 export default function HomePage() {
   const stats = getLibraryStats();
   const recentPapers = papers.slice(0, 3);
+  const featuredPaper = recentPapers[0] ?? papers[0] ?? null;
 
   return (
     <div className="page-stack">
       <section className="hero-grid">
         <div className="hero-card hero-primary">
-          <p className="eyebrow">Personal research cockpit</p>
-          <h1>上传即处理，不再等固定时间批量跑脚本。</h1>
+          <p className="eyebrow">Curated Research Atlas</p>
+          <h1>把 LEO SOP 文献做成一座可浏览的研究展厅。</h1>
           <p className="hero-copy">
-            这版骨架已经把网站的核心形态搭出来了：文献库、详情页、上传入口和后续可接的处理链路。
+            这一版只做网站体验本身：用更清晰的视觉层次，把研究主线、方法分野和代表论文整理成一个适合浏览与阅读的站点。
           </p>
 
           <div className="hero-actions">
-            <Link className="primary-button" href="/upload">
-              上传新论文
+            <Link className="primary-button" href="/library">
+              进入文献库
             </Link>
-            <Link className="secondary-button" href="/library">
-              查看文献库
-            </Link>
+            {featuredPaper ? (
+              <Link className="secondary-button" href={`/papers/${featuredPaper.id}`}>
+                查看精选论文
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -40,6 +58,10 @@ export default function HomePage() {
           <div className="stat-item">
             <strong>{stats.tagCount}</strong>
             <span>交叉标签</span>
+          </div>
+          <div className="hero-note">
+            <p className="section-label">Site Direction</p>
+            <p>只保留内容展示、筛选和阅读动线，不再承载本地上传、处理或脚本管理。</p>
           </div>
         </div>
       </section>
@@ -76,14 +98,16 @@ export default function HomePage() {
 
         <div className="panel">
           <div className="panel-head">
-            <h2>你接下来要接的真实能力</h2>
+            <h2>策展信号</h2>
           </div>
-          <ul className="clean-list">
-            <li>对象存储: 保存 PDF 原件</li>
-            <li>数据库: 存论文、分类、标签、笔记</li>
-            <li>异步任务: 上传后立即提取和查重</li>
-            <li>处理服务: 接你现有 PDF 提取逻辑</li>
-          </ul>
+          <div className="feature-grid">
+            {collectionSignals.map((signal) => (
+              <article key={signal.title} className="feature-card">
+                <p className="section-label">{signal.title}</p>
+                <p>{signal.body}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

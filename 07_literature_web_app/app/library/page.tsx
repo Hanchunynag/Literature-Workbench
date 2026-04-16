@@ -12,6 +12,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const query = resolvedSearchParams.q?.trim().toLowerCase() ?? "";
   const category = resolvedSearchParams.category?.trim() ?? "";
+  const featuredTags = Array.from(new Set(papers.flatMap((paper) => paper.tags))).slice(0, 8);
 
   const categories = Array.from(
     new Set(papers.map((paper) => paper.primaryCategory))
@@ -31,10 +32,25 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
 
   return (
     <div className="page-stack">
-      <section className="panel">
+      <section className="panel library-hero">
         <div className="panel-head">
-          <h1>文献库</h1>
-          <p className="muted-text">先用 mock 数据跑通交互，后面再接数据库。</p>
+          <div>
+            <p className="eyebrow">Curated Library</p>
+            <h1>文献库</h1>
+            <p className="muted-text">按标题、标签、关键词和一级方向切换阅读视角。</p>
+          </div>
+          <div className="library-summary">
+            <strong>{filteredPapers.length}</strong>
+            <span>篇匹配论文</span>
+          </div>
+        </div>
+
+        <div className="tag-row">
+          {featuredTags.map((tag) => (
+            <span key={tag} className="tag-pill">
+              {tag}
+            </span>
+          ))}
         </div>
 
         <form className="filters-grid" method="get">
@@ -67,7 +83,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         ) : (
           <div className="empty-state">
             <h2>没有匹配结果</h2>
-            <p>这说明后面需要把搜索条件和标签管理做得更细一点。</p>
+            <p>可以换一个关键词，或者先回到全部方向重新浏览。</p>
           </div>
         )}
       </section>

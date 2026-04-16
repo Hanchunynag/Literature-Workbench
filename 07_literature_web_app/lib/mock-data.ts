@@ -22,7 +22,7 @@ export const papers: Paper[] = [
       "Error Correction Analysis and Enhanced Algorithm for Standalone Doppler-Based Positioning Using Iridium-Next and Orbcomm Constellations",
     year: 2025,
     authors: ["Yang", "Zhang", "Kassas"],
-    primaryCategory: "定位导航方向",
+    primaryCategory: "定位方法",
     subcategories: ["LEO SOP", "Doppler positioning", "GNSS denied"],
     tags: ["Iridium", "Orbcomm", "多历元", "误差修正"],
     keywords: [
@@ -57,8 +57,7 @@ export const papers: Paper[] = [
     ],
     candidateIdeas: [
       "candidate: 在双星座 Doppler-only 基线之上叠加分层加权和鲁棒抑制。 "
-    ],
-    status: "processed"
+    ]
   },
   {
     id: "2025-xu-joint-pseudorange-doppler",
@@ -66,7 +65,7 @@ export const papers: Paper[] = [
       "Joint pseudo-range and Doppler positioning method with LEO Satellites' signals of opportunity",
     year: 2025,
     authors: ["Xu", "Li", "Wang"],
-    primaryCategory: "定位导航方向",
+    primaryCategory: "定位方法",
     subcategories: ["LEO SOP", "pseudorange positioning", "Doppler positioning"],
     tags: ["混合观测", "可观性", "Iridium", "Starlink"],
     keywords: ["pseudorange", "Doppler", "EPDOP", "mixed observations"],
@@ -95,8 +94,7 @@ export const papers: Paper[] = [
     ],
     candidateIdeas: [
       "candidate: 显式传播不同观测类型与不同星座的不确定度到联合 WLS / VarPro。"
-    ],
-    status: "processed"
+    ]
   },
   {
     id: "2024-hayek-timing-spatial",
@@ -104,7 +102,7 @@ export const papers: Paper[] = [
       "Modeling and Compensation of Timing and Spatial Ephemeris Errors of Non-Cooperative LEO Satellites With Application to PNT",
     year: 2024,
     authors: ["Hayek", "Mina", "Kassas"],
-    primaryCategory: "轨道与星历方向",
+    primaryCategory: "轨道与星历误差建模",
     subcategories: ["orbit error compensation", "timing error", "LEO SOP"],
     tags: ["星历误差", "时间误差", "UKF", "参考站辅助"],
     keywords: ["timing error", "spatial error", "UKF", "Doppler"],
@@ -134,15 +132,14 @@ export const papers: Paper[] = [
     ],
     candidateIdeas: [
       "candidate: 先做解析 timing/spatial 补偿，再学习剩余 along-track 与 timing 残差。"
-    ],
-    status: "processed"
+    ]
   },
   {
     id: "2024-jardak-multi-leo",
     title: "Leveraging Multi-LEO Satellite Signals for Opportunistic Positioning",
     year: 2024,
     authors: ["Jardak", "Kassas"],
-    primaryCategory: "多源融合方向",
+    primaryCategory: "多星座融合与观测建模",
     subcategories: ["LEO SOP", "multi-constellation fusion"],
     tags: ["Iridium", "Orbcomm", "NOAA", "质量差异"],
     keywords: ["multi-LEO", "Doppler", "Iridium-next", "Orbcomm"],
@@ -170,8 +167,7 @@ export const papers: Paper[] = [
     ],
     candidateIdeas: [
       "candidate: 把星座层质量差异和观测层残差一致地并入分层权重。"
-    ],
-    status: "processed"
+    ]
   }
 ];
 

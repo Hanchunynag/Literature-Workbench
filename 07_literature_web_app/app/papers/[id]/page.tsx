@@ -31,6 +31,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
         </div>
         <h1>{paper.title}</h1>
         <p className="paper-authors">{paper.authors.join(", ")}</p>
+        <p className="detail-summary">{paper.coreContribution}</p>
 
         <div className="tag-row">
           {paper.subcategories.map((item) => (
@@ -41,15 +42,11 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
 
       <section className="detail-grid">
         <article className="panel">
-          <h2>Paper snapshot</h2>
+          <h2>Paper Snapshot</h2>
           <dl className="snapshot-grid">
             <div>
               <dt>关键词</dt>
               <dd>{paper.keywords.join(" / ")}</dd>
-            </div>
-            <div>
-              <dt>核心贡献</dt>
-              <dd>{paper.coreContribution}</dd>
             </div>
             <div>
               <dt>适用性判断</dt>
@@ -63,7 +60,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
         </article>
 
         <article className="panel">
-          <h2>What this paper does</h2>
+          <h2>论文在做什么</h2>
           <ul className="clean-list">
             {paper.whatThisPaperDoes.map((item) => (
               <li key={item}>{item}</li>
@@ -72,7 +69,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
         </article>
 
         <article className="panel">
-          <h2>Claimed innovations</h2>
+          <h2>论文声称的创新点</h2>
           <ul className="clean-list">
             {paper.claimedInnovations.map((item) => (
               <li key={item}>{item}</li>
@@ -81,7 +78,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
         </article>
 
         <article className="panel">
-          <h2>Useful to my topic</h2>
+          <h2>对当前研究的启发</h2>
           <ul className="clean-list">
             {paper.usefulToMyTopic.map((item) => (
               <li key={item}>{item}</li>
@@ -90,7 +87,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
         </article>
 
         <article className="panel">
-          <h2>Limitations</h2>
+          <h2>局限与边界</h2>
           <ul className="clean-list">
             {paper.limitations.map((item) => (
               <li key={item}>{item}</li>
@@ -99,7 +96,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
         </article>
 
         <article className="panel">
-          <h2>My candidate ideas</h2>
+          <h2>可延展设想</h2>
           <ul className="clean-list">
             {paper.candidateIdeas.map((item) => (
               <li key={item}>{item}</li>
