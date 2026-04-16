@@ -1,4 +1,6 @@
+import { AgentPlayground } from "@/components/agent-playground";
 import { UploadForm } from "@/components/upload-form";
+import { getPublicAgentProviders } from "@/lib/agent-catalog";
 
 const uploadSignals = [
   "让上传成为站点中的自然入口，而不是后台管理面板。",
@@ -7,6 +9,8 @@ const uploadSignals = [
 ];
 
 export default function UploadPage() {
+  const providers = getPublicAgentProviders();
+
   return (
     <div className="page-stack">
       <section className="panel upload-hero">
@@ -31,6 +35,20 @@ export default function UploadPage() {
 
       <section className="panel">
         <UploadForm />
+      </section>
+
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <p className="eyebrow">Agent Playground</p>
+            <h2>多模型 Agent 试验台</h2>
+            <p className="muted-text">
+              在同一套前端里切换 provider 和 model，直接比较输出风格与分析能力。
+            </p>
+          </div>
+        </div>
+
+        <AgentPlayground providers={providers} />
       </section>
     </div>
   );
