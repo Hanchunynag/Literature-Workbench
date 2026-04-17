@@ -1,10 +1,15 @@
-import { Agent, OpenAIChatCompletionsModel, OpenAIResponsesModel, run, tool } from "@openai/agents";
-import OpenAI from "openai";
 import { z } from "zod";
 
 import {
+  Agent,
+  createAgentRunner,
+  OpenAIChatCompletionsModel,
+  OpenAIResponsesModel,
+  tool
+} from "@/lib/agents/sdk";
+import {
+  createProviderClient,
   getFallbackProvider,
-  getInternalAgentProvider,
   getPublicAgentProviders,
   type AgentProviderId
 } from "@/lib/agent-catalog";
@@ -75,27 +80,28 @@ type RunResearchAgentInput = {
   abstractText?: string;
   topic?: string;
   note?: string;
-  message: string;
+  message?: string;
+  messages?: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
 };
 
 function buildModel(providerId: AgentProviderId, modelName: string) {
-  const provider = getInternalAgentProvider(providerId);
-
-  if (!provider) {
-    throw new Error("当前 provider 未配置 API Key。");
-  }
-
-  const client = new OpenAI({
-    apiKey: provider.apiKey,
-    baseURL: provider.baseURL,
-    defaultHeaders: provider.defaultHeaders
-  });
+  const { provider, client } = createProviderClient(providerId);
+  const runner = createAgentRunner(client);
 
   if (provider.transport === "responses") {
-    return new OpenAIResponsesModel(client, modelName);
+    return {
+      runner,
+      model: new OpenAIResponsesModel(client, modelName)
+    };
   }
 
-  return new OpenAIChatCompletionsModel(client, modelName);
+  return {
+    runner,
+    model: new OpenAIChatCompletionsModel(client, modelName)
+  };
 }
 
 export async function runResearchAgent(input: RunResearchAgentInput) {
@@ -115,9 +121,11 @@ export async function runResearchAgent(input: RunResearchAgentInput) {
     input.model?.trim() ||
     selectedProvider.defaultModel;
 
+  const builtModel = buildModel(selectedProvider.id, modelName);
+
   const agent = new Agent({
     name: "Literature Research Assistant",
-    model: buildModel(selectedProvider.id, modelName),
+    model: builtModel.model,
     instructions: `
 你是一个 LEO SOP 文献网站里的研究助手。
 
@@ -140,15 +148,23 @@ ${topicSnapshot.keyQuestions.map((line) => `- ${line}`).join("\n")}
     tools: [searchLibraryTool, getPaperDetailsTool]
   });
 
+  const conversationTranscript =
+    input.messages && input.messages.length > 0
+      ? input.messages
+          .map((item) => `${item.role === "user" ? "用户" : "助手"}:\n${item.content.trim()}`)
+          .join("\n\n")
+      : null;
+
   const promptParts = [
-    `用户问题:\n${input.message.trim()}`,
+    conversationTranscript ? `当前对话记录:\n${conversationTranscript}` : null,
+    input.message?.trim() ? `用户问题:\n${input.message.trim()}` : null,
     input.paperTitle?.trim() ? `论文标题:\n${input.paperTitle.trim()}` : null,
     input.abstractText?.trim() ? `摘要 / 提取文本:\n${input.abstractText.trim()}` : null,
     input.topic?.trim() ? `研究专题:\n${input.topic.trim()}` : null,
     input.note?.trim() ? `用户备注:\n${input.note.trim()}` : null
   ].filter(Boolean);
 
-  const result = await run(agent, promptParts.join("\n\n"));
+  const result = await builtModel.runner.run(agent, promptParts.join("\n\n"));
 
   return {
     providerId: selectedProvider.id,

@@ -12,7 +12,15 @@ const agentRequestSchema = z.object({
   abstractText: z.string().optional(),
   topic: z.string().optional(),
   note: z.string().optional(),
-  message: z.string().min(1, "message is required")
+  message: z.string().optional(),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().min(1)
+      })
+    )
+    .optional()
 });
 
 export async function GET() {
@@ -37,6 +45,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const payload = agentRequestSchema.parse(await request.json());
+    const hasSingleMessage = Boolean(payload.message?.trim());
+    const hasMessages = Boolean(payload.messages && payload.messages.length > 0);
+
+    if (!hasSingleMessage && !hasMessages) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "message is required"
+        },
+        { status: 400 }
+      );
+    }
+
     const result = await runResearchAgent(payload);
 
     return NextResponse.json({

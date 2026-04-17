@@ -1,5 +1,7 @@
+import { LibraryMaintenancePanel } from "@/components/library-maintenance-panel";
+import { PaperStatusBadge } from "@/components/paper-status-badge";
 import { PaperCard } from "@/components/paper-card";
-import { papers } from "@/lib/mock-data";
+import { listPapers } from "@/lib/db/papers";
 
 type LibraryPageProps = {
   searchParams?: Promise<{
@@ -8,14 +10,19 @@ type LibraryPageProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const query = resolvedSearchParams.q?.trim().toLowerCase() ?? "";
   const category = resolvedSearchParams.category?.trim() ?? "";
-  const featuredTags = Array.from(new Set(papers.flatMap((paper) => paper.tags))).slice(0, 8);
+  const papers = listPapers();
+  const featuredTags = Array.from(
+    new Set(papers.flatMap((paper) => [...paper.tags, ...paper.keywords]))
+  ).slice(0, 8);
 
   const categories = Array.from(
-    new Set(papers.map((paper) => paper.primaryCategory))
+    new Set(papers.map((paper) => paper.primaryCategory).filter(Boolean))
   );
 
   const filteredPapers = papers.filter((paper) => {
@@ -37,7 +44,9 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           <div>
             <p className="eyebrow">Curated Library</p>
             <h1>文献库</h1>
-            <p className="muted-text">按标题、标签、关键词和一级方向切换阅读视角。</p>
+            <p className="muted-text">
+              真实数据库结果会显示在这里，上传后的论文会从 uploaded 逐步进入 ready。
+            </p>
           </div>
           <div className="library-summary">
             <strong>{filteredPapers.length}</strong>
@@ -51,6 +60,8 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
               {tag}
             </span>
           ))}
+          <PaperStatusBadge status="ready" />
+          <PaperStatusBadge status="failed" />
         </div>
 
         <form className="filters-grid" method="get">
@@ -77,13 +88,15 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         </form>
       </section>
 
+      <LibraryMaintenancePanel />
+
       <section className="card-grid">
         {filteredPapers.length > 0 ? (
           filteredPapers.map((paper) => <PaperCard key={paper.id} paper={paper} />)
         ) : (
           <div className="empty-state">
             <h2>没有匹配结果</h2>
-            <p>可以换一个关键词，或者先回到全部方向重新浏览。</p>
+            <p>如果你刚上传了论文，可以稍后刷新，或者回到上传页继续添加新 PDF。</p>
           </div>
         )}
       </section>

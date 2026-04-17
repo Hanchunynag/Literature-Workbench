@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PaperClassificationCard } from "@/components/paper-classification-card";
+import { PaperStatusBadge } from "@/components/paper-status-badge";
+import { PaperSummaryCard } from "@/components/paper-summary-card";
 import { TagPill } from "@/components/tag-pill";
-import { getPaperById } from "@/lib/mock-data";
+import { getPaperDetail } from "@/lib/db/papers";
 
 type PaperDetailPageProps = {
   params: Promise<{
@@ -10,13 +13,17 @@ type PaperDetailPageProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function PaperDetailPage({ params }: PaperDetailPageProps) {
   const { id } = await params;
-  const paper = getPaperById(id);
+  const detail = getPaperDetail(id);
 
-  if (!paper) {
+  if (!detail) {
     notFound();
   }
+
+  const { paper, classification, summary } = detail;
 
   return (
     <div className="page-stack">
@@ -26,15 +33,22 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
 
       <section className="panel detail-hero">
         <div className="detail-meta-row">
-          <TagPill tone="strong">{paper.primaryCategory}</TagPill>
-          <span className="muted-text">{paper.year}</span>
+          {classification ? (
+            <TagPill tone="strong">{classification.primaryCategory}</TagPill>
+          ) : null}
+          <PaperStatusBadge status={paper.status} />
+          <span className="muted-text">{paper.year ?? "年份待提取"}</span>
         </div>
-        <h1>{paper.title}</h1>
-        <p className="paper-authors">{paper.authors.join(", ")}</p>
-        <p className="detail-summary">{paper.coreContribution}</p>
+        <h1>{paper.title ?? paper.originalFileName}</h1>
+        <p className="paper-authors">
+          {paper.authors.length > 0 ? paper.authors.join(", ") : "作者待提取"}
+        </p>
+        <p className="detail-summary">
+          {summary?.coreContribution ?? "当前仍在处理论文内容，结构化总结完成后会显示在这里。"}
+        </p>
 
         <div className="tag-row">
-          {paper.subcategories.map((item) => (
+          {(classification?.subcategories ?? []).map((item) => (
             <TagPill key={item}>{item}</TagPill>
           ))}
         </div>
@@ -45,64 +59,36 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
           <h2>Paper Snapshot</h2>
           <dl className="snapshot-grid">
             <div>
-              <dt>关键词</dt>
-              <dd>{paper.keywords.join(" / ")}</dd>
+              <dt>原始文件</dt>
+              <dd>{paper.originalFileName}</dd>
             </div>
             <div>
-              <dt>适用性判断</dt>
-              <dd>{paper.relevanceNote}</dd>
+              <dt>研究专题</dt>
+              <dd>{paper.topic ?? "未填写"}</dd>
             </div>
             <div>
-              <dt>创新性判断</dt>
-              <dd>{paper.innovationNote}</dd>
+              <dt>备注</dt>
+              <dd>{paper.note ?? "无"}</dd>
+            </div>
+            <div>
+              <dt>提取字符数</dt>
+              <dd>{paper.extractedCharCount}</dd>
             </div>
           </dl>
         </article>
 
-        <article className="panel">
-          <h2>论文在做什么</h2>
-          <ul className="clean-list">
-            {paper.whatThisPaperDoes.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
+        {classification ? <PaperClassificationCard classification={classification} /> : null}
 
-        <article className="panel">
-          <h2>论文声称的创新点</h2>
-          <ul className="clean-list">
-            {paper.claimedInnovations.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
+        {summary ? <PaperSummaryCard summary={summary} /> : null}
 
-        <article className="panel">
-          <h2>对当前研究的启发</h2>
-          <ul className="clean-list">
-            {paper.usefulToMyTopic.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
-
-        <article className="panel">
-          <h2>局限与边界</h2>
-          <ul className="clean-list">
-            {paper.limitations.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
-
-        <article className="panel">
-          <h2>可延展设想</h2>
-          <ul className="clean-list">
-            {paper.candidateIdeas.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
+        {paper.status !== "ready" ? (
+          <article className="panel">
+            <h2>处理状态</h2>
+            <p>当前状态：{paper.status}</p>
+            {paper.errorMessage ? <p>错误信息：{paper.errorMessage}</p> : null}
+            <p>上传后后台会依次执行提取、分类、总结。刷新页面即可查看最新结果。</p>
+          </article>
+        ) : null}
       </section>
     </div>
   );

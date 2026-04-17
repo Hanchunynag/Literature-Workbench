@@ -3,10 +3,12 @@ import { UploadForm } from "@/components/upload-form";
 import { getPublicAgentProviders } from "@/lib/agent-catalog";
 
 const uploadSignals = [
-  "让上传成为站点中的自然入口，而不是后台管理面板。",
-  "保留表单和状态反馈，方便继续推进高保真设计。",
-  "把上传后的后续处理留到未来版本，不在当前网站实现。"
+  "上传 PDF 后立即创建论文记录并启动后台处理。",
+  "先做提取、分类、总结 3 个步骤，不扩展成复杂多 agent 系统。",
+  "文献库和详情页都会直接读取真实数据库结果。"
 ];
+
+export const dynamic = "force-dynamic";
 
 export default function UploadPage() {
   const providers = getPublicAgentProviders();
@@ -19,7 +21,7 @@ export default function UploadPage() {
             <p className="eyebrow">Upload Entry</p>
             <h1>上传论文</h1>
             <p className="muted-text">
-              这里保留网站里的上传入口，方便你继续打磨完整产品体验。
+              第一阶段已经接入真实上传、后台处理和结构化结果展示，这里就是主入口。
             </p>
           </div>
         </div>
@@ -43,7 +45,7 @@ export default function UploadPage() {
             <p className="eyebrow">Agent Playground</p>
             <h2>多模型 Agent 试验台</h2>
             <p className="muted-text">
-              在同一套前端里切换 provider 和 model，直接比较输出风格与分析能力。
+              在同一套前端里切换 provider 和 model，先测连接，再用右侧对话窗口直接测试连续聊天。
             </p>
           </div>
         </div>

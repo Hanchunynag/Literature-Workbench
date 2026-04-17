@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { PaperCard } from "@/components/paper-card";
 import { TagPill } from "@/components/tag-pill";
-import { getLibraryStats, papers, topicSnapshot } from "@/lib/mock-data";
+import { listPapers } from "@/lib/db/papers";
+import { topicSnapshot } from "@/lib/mock-data";
 
 const collectionSignals = [
   {
@@ -19,10 +20,19 @@ const collectionSignals = [
   }
 ];
 
+export const dynamic = "force-dynamic";
+
 export default function HomePage() {
-  const stats = getLibraryStats();
-  const recentPapers = papers.slice(0, 3);
-  const featuredPaper = recentPapers[0] ?? papers[0] ?? null;
+  const allPapers = listPapers();
+  const recentPapers = allPapers.slice(0, 3);
+  const featuredPaper = recentPapers[0] ?? null;
+  const stats = {
+    paperCount: allPapers.length,
+    categoryCount: new Set(
+      allPapers.map((paper) => paper.primaryCategory).filter(Boolean)
+    ).size,
+    tagCount: new Set(allPapers.flatMap((paper) => paper.tags)).size
+  };
 
   return (
     <div className="page-stack">
@@ -52,7 +62,7 @@ export default function HomePage() {
         <div className="hero-card hero-stats">
           <div className="stat-item">
             <strong>{stats.paperCount}</strong>
-            <span>已挂载示例论文</span>
+            <span>最近论文</span>
           </div>
           <div className="stat-item">
             <strong>{stats.categoryCount}</strong>

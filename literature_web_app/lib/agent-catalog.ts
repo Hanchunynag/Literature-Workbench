@@ -1,6 +1,8 @@
+import OpenAI from "openai";
+
 export type AgentTransport = "responses" | "chat_completions";
 
-export type AgentProviderId = "openai" | "openrouter" | "groq";
+export type AgentProviderId = "openai" | "openrouter" | "groq" | "hermes";
 
 type InternalAgentProvider = {
   id: AgentProviderId;
@@ -86,6 +88,23 @@ function buildProviders(): InternalAgentProvider[] {
     });
   }
 
+  const hermesApiKey = process.env.HERMES_API_KEY?.trim();
+  const hermesBaseURL = process.env.HERMES_BASE_URL?.trim();
+
+  if (hermesApiKey || hermesBaseURL) {
+    const models = parseModels(process.env.HERMES_MODELS, ["hermes-agent"]);
+
+    providers.push({
+      id: "hermes",
+      label: "Hermes",
+      apiKey: hermesApiKey || "hermes-local",
+      baseURL: hermesBaseURL || "http://127.0.0.1:8642/v1",
+      transport: "chat_completions",
+      models,
+      defaultModel: models[0]
+    });
+  }
+
   return providers;
 }
 
@@ -99,6 +118,23 @@ export function getInternalAgentProvider(providerId: AgentProviderId) {
 
 export function getFallbackProvider() {
   return buildProviders()[0] ?? null;
+}
+
+export function createProviderClient(providerId: AgentProviderId) {
+  const provider = getInternalAgentProvider(providerId);
+
+  if (!provider) {
+    throw new Error("当前 provider 未配置 API Key。");
+  }
+
+  return {
+    provider,
+    client: new OpenAI({
+      apiKey: provider.apiKey,
+      baseURL: provider.baseURL,
+      defaultHeaders: provider.defaultHeaders
+    })
+  };
 }
 
 export function resolveModelName(

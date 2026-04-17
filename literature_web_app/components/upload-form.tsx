@@ -1,34 +1,97 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type UploadState = {
-  fileName: string;
-  topic: string;
-  note: string;
+  batchId?: string;
+  status: string;
+  items: Array<{
+    paperId: string;
+    fileId?: string;
+    fileName: string;
+    status: string;
+    duplicate: boolean;
+  }>;
 };
 
 export function UploadForm() {
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
   const [uploadState, setUploadState] = useState<UploadState | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsPending(true);
+    setError("");
 
     const formData = new FormData(event.currentTarget);
-    const file = formData.get("paper");
-    const topic = String(formData.get("topic") ?? "").trim();
-    const note = String(formData.get("note") ?? "").trim();
+    const files = formData.getAll("paper").filter((value): value is File => value instanceof File);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const response = await fetch("/api/papers/upload", {
+        method: "POST",
+        body: formData
+      });
 
-    setUploadState({
-      fileName: file instanceof File ? file.name : "未命名文件",
-      topic: topic || "未指定专题",
-      note: note || "无备注"
-    });
-    setIsPending(false);
+      const payload = (await response.json()) as
+        | {
+            ok: true;
+            batchId?: string;
+            status: string;
+            paperId?: string;
+            fileId?: string;
+            duplicate?: boolean;
+            items?: Array<{
+              paperId: string;
+              fileId?: string;
+              fileName: string;
+              status: string;
+              duplicate: boolean;
+            }>;
+            message?: string;
+          }
+        | { ok: false; message: string };
+
+      if (!response.ok || !payload.ok) {
+        setError(payload.ok ? "上传失败。" : payload.message);
+        setUploadState(null);
+        return;
+      }
+
+      setUploadState({
+        batchId: payload.batchId,
+        status: payload.status,
+        items:
+          payload.items ??
+          [
+            {
+              paperId: payload.paperId ?? "",
+              fileId: payload.fileId,
+              fileName: files[0]?.name ?? "未命名文件",
+              status: payload.status,
+              duplicate: Boolean(payload.duplicate)
+            }
+          ]
+      });
+
+      if (payload.message) {
+        setError(payload.message);
+      }
+
+      if (payload.items && payload.items.length > 1) {
+        router.push("/library");
+        router.refresh();
+      } else if (payload.paperId) {
+        router.push(`/papers/${payload.paperId}`);
+        router.refresh();
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "上传失败。");
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (
@@ -36,7 +99,7 @@ export function UploadForm() {
       <form className="upload-form" onSubmit={handleSubmit}>
         <label className="field">
           <span>选择论文 PDF</span>
-          <input accept="application/pdf" name="paper" required type="file" />
+          <input accept="application/pdf" multiple name="paper" required type="file" />
         </label>
 
         <label className="field">
@@ -66,24 +129,40 @@ export function UploadForm() {
 
       <aside className="upload-aside">
         <p className="section-label">Upload Experience</p>
-        <h3>上传入口保留，但只做网站交互</h3>
+        <h3>真实上传 + 本地处理 pipeline</h3>
         <ul className="clean-list">
-          <li>保留文件选择、研究专题和备注输入。</li>
-          <li>保留界面反馈，方便继续做真实产品设计。</li>
-          <li>不恢复本地脚本、自动分类或处理队列。</li>
+          <li>PDF 会保存到本地 `data/papers/raw/`。</li>
+          <li>上传前会按 PDF 内容去重，重复论文不会再次进入处理流程。</li>
+          <li>一次可以上传多个 PDF，但后台会逐文件提取、逐文件发给 Hermes，不会混发。</li>
+          <li>上传成功后立即创建论文记录并异步触发处理。</li>
+          <li>处理状态会经历 uploaded / extracting / classifying / summarizing / ready / failed。</li>
         </ul>
       </aside>
+
+      {error ? (
+        <div className="result-box error upload-result">
+          <p>{error}</p>
+        </div>
+      ) : null}
 
       {uploadState ? (
         <div className="result-box success upload-result">
           <p className="section-label">Upload Snapshot</p>
-          <h3>{uploadState.fileName}</h3>
+          {uploadState.batchId ? (
+            <p>
+              <strong>batchId:</strong> {uploadState.batchId}
+            </p>
+          ) : null}
           <p>
-            <strong>专题:</strong> {uploadState.topic}
+            <strong>状态:</strong> {uploadState.status}
           </p>
-          <p>
-            <strong>备注:</strong> {uploadState.note}
-          </p>
+          <ul className="clean-list">
+            {uploadState.items.map((item) => (
+              <li key={`${item.paperId}-${item.fileName}`}>
+                {item.fileName} · {item.fileId ?? "legacy"} · {item.duplicate ? "已命中现有论文" : "新论文，已进入流程"}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
     </div>
