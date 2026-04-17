@@ -16,6 +16,8 @@ type BuildAgentModelInput = {
   modelName?: string;
 };
 
+const HERMES_SKILLS = ["litprod-paper-json"] as const;
+
 export function buildAgentModel(input: BuildAgentModelInput) {
   const fallbackProvider = getFallbackProvider();
   const selectedProvider =
@@ -39,6 +41,14 @@ export function buildAgentModel(input: BuildAgentModelInput) {
     providerId: selectedProvider.id,
     providerLabel: selectedProvider.label,
     modelName,
+    modelSettings:
+      selectedProvider.id === "hermes"
+        ? {
+            providerData: {
+              skills: [...HERMES_SKILLS]
+            }
+          }
+        : {},
     runner: createAgentRunner(client),
     model:
       selectedProvider.transport === "responses"

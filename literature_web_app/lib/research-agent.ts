@@ -90,17 +90,27 @@ type RunResearchAgentInput = {
 function buildModel(providerId: AgentProviderId, modelName: string) {
   const { provider, client } = createProviderClient(providerId);
   const runner = createAgentRunner(client);
+  const modelSettings =
+    provider.id === "hermes"
+      ? {
+          providerData: {
+            skills: ["litprod-paper-json"]
+          }
+        }
+      : {};
 
   if (provider.transport === "responses") {
     return {
       runner,
-      model: new OpenAIResponsesModel(client, modelName)
+      model: new OpenAIResponsesModel(client, modelName),
+      modelSettings
     };
   }
 
   return {
     runner,
-    model: new OpenAIChatCompletionsModel(client, modelName)
+    model: new OpenAIChatCompletionsModel(client, modelName),
+    modelSettings
   };
 }
 
@@ -126,6 +136,7 @@ export async function runResearchAgent(input: RunResearchAgentInput) {
   const agent = new Agent({
     name: "Literature Research Assistant",
     model: builtModel.model,
+    modelSettings: builtModel.modelSettings,
     instructions: `
 你是一个 LEO SOP 文献网站里的研究助手。
 

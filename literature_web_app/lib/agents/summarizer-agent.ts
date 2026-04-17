@@ -161,6 +161,7 @@ export async function summarizeWithAgent(input: {
   const agent = new Agent({
     name: "Paper Analyzer",
     model: builtModel.model,
+    modelSettings: builtModel.modelSettings,
     instructions: summarizerPrompt
   });
 
@@ -229,6 +230,7 @@ export async function summarizeWithAgent(input: {
       const validationAgent = new Agent({
         name: "Paper Analysis Validator",
         model: builtModel.model,
+        modelSettings: builtModel.modelSettings,
         instructions: summaryValidatorPrompt
       });
 

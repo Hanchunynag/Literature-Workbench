@@ -54,6 +54,7 @@ export async function classifyWithAgent(input: {
   const agent = new Agent({
     name: "Paper Classifier",
     model: builtModel.model,
+    modelSettings: builtModel.modelSettings,
     instructions: classifierPrompt
   });
 
