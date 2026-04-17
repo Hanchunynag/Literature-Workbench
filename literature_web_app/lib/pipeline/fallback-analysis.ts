@@ -6,8 +6,8 @@ function includesAny(source: string, patterns: string[]) {
   return patterns.some((pattern) => source.includes(pattern));
 }
 
-function unique(items: string[]) {
-  return Array.from(new Set(items.filter(Boolean)));
+function unique<T extends string>(items: readonly T[]) {
+  return Array.from(new Set(items.filter((item): item is Exclude<T, ""> => item.length > 0)));
 }
 
 export function buildFallbackClassification(input: {

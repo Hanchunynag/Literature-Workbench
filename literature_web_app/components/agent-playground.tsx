@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import type { PublicAgentProvider } from "@/lib/agent-catalog";
+import type { AgentProviderId, PublicAgentProvider } from "@/lib/agent-catalog";
 
 type AgentPlaygroundProps = {
   providers: PublicAgentProvider[];
@@ -28,7 +28,7 @@ type ChatMessage = {
 };
 
 export function AgentPlayground({ providers }: AgentPlaygroundProps) {
-  const [providerId, setProviderId] = useState(providers[0]?.id ?? "");
+  const [providerId, setProviderId] = useState<AgentProviderId | "">(providers[0]?.id ?? "");
   const [selectedModel, setSelectedModel] = useState(providers[0]?.defaultModel ?? "");
   const [customModel, setCustomModel] = useState("");
   const [paperTitle, setPaperTitle] = useState("");
@@ -241,7 +241,10 @@ export function AgentPlayground({ providers }: AgentPlaygroundProps) {
           <div className="agent-provider-grid">
             <label className="field">
               <span>Provider</span>
-              <select value={providerId} onChange={(event) => setProviderId(event.target.value)}>
+              <select
+                value={providerId}
+                onChange={(event) => setProviderId(event.target.value as AgentProviderId)}
+              >
                 {providers.map((provider) => (
                   <option key={provider.id} value={provider.id}>
                     {provider.label}
