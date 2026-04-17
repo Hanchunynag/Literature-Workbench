@@ -40,6 +40,7 @@
 - 改进了 PDF 章节标题识别，像 `5 Conclusion`、`2. Introduction` 这类带编号标题更容易被正确识别。
 - 新增 Marker 提取脚本，并通过 `PDF_EXTRACTOR_BACKEND=marker` 支持服务器端优先使用 Marker 解析 PDF。
 - Node 侧 Python 提取桥接改为可切换后端：`marker` / `pypdf` / `langchain`。
+- Marker 脚本现在会禁用图片导出，并自动把正文 markdown 保存到本地目录，便于直接查看正文结果。
 
 ## 2026-04-16
 

@@ -49,6 +49,7 @@ HERMES_MODELS=hermes-agent
 
 PDF_PYTHON_BIN=python3
 PDF_EXTRACTOR_BACKEND=marker
+MARKER_MARKDOWN_DIR=
 
 PAPER_CLASSIFIER_PROVIDER=
 PAPER_CLASSIFIER_MODEL=
@@ -63,6 +64,11 @@ PAPER_SUMMARIZER_MODEL=
 - `marker`: 服务器推荐，使用 Marker 解析 PDF
 - `pypdf`: 使用当前轻量 `pypdf` 解析脚本
 - `langchain`: 使用 `LangChain + PyPDFLoader` 实验版
+
+`MARKER_MARKDOWN_DIR`：
+
+- 留空时，默认保存到 `data/papers/extracted_markdown/`
+- 如果你想改到别的目录，可以填绝对路径
 
 ## 服务器部署
 
@@ -90,6 +96,7 @@ npm start
 说明：
 
 - `PDF_EXTRACTOR_BACKEND=marker` 时，上传后的 PDF 会优先走 Marker 提取。
+- Marker 脚本会关闭图片提取，并把正文 markdown 自动保存到 `data/papers/extracted_markdown/` 或你指定的 `MARKER_MARKDOWN_DIR`。
 - 上传的 PDF、数据库和分析结果都会落到服务器本地 `data/` 目录。
 - 如果你服务器上跑本地模型，可以把 `HERMES_BASE_URL` 指向服务器本机模型地址。
 

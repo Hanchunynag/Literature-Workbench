@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -24,7 +25,22 @@ else:
     IMPORT_ERROR = None
 
 
-def extract_text_marker(pdf_path: Path) -> tuple[str, int]:
+def get_markdown_output_dir() -> Path:
+    configured = os.environ.get("MARKER_MARKDOWN_DIR", "").strip()
+    if configured:
+        return Path(configured).expanduser().resolve()
+    return (Path.cwd() / "data" / "papers" / "extracted_markdown").resolve()
+
+
+def save_markdown_output(pdf_path: Path, markdown: str) -> Path:
+    output_dir = get_markdown_output_dir()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"{pdf_path.stem}.md"
+    output_path.write_text(markdown, encoding="utf-8")
+    return output_path
+
+
+def extract_text_marker(pdf_path: Path) -> tuple[str, int, Path]:
     if PdfConverter is None or ConfigParser is None or create_model_dict is None or text_from_rendered is None:
         raise RuntimeError(
             "marker-pdf 未安装，无法使用 Marker 解析 PDF。"
@@ -46,19 +62,21 @@ def extract_text_marker(pdf_path: Path) -> tuple[str, int]:
     )
 
     rendered = converter(str(pdf_path))
+    markdown = getattr(rendered, "markdown", "") or ""
+    markdown_path = save_markdown_output(pdf_path, markdown)
     text, _, _ = text_from_rendered(rendered)
     page_count = len(getattr(rendered, "metadata", []) or [])
 
     if page_count == 0:
         page_count = text.count("\f") + 1 if text else 0
 
-    return base_extractor.normalize_text(text), page_count
+    return base_extractor.normalize_text(text), page_count, markdown_path
 
 
 def extract_pdf_keyinfo_with_marker(pdf_path: Path) -> dict:
     meta = base_extractor.read_metadata_pypdf(pdf_path)
 
-    text, page_count = extract_text_marker(pdf_path)
+    text, page_count, markdown_path = extract_text_marker(pdf_path)
     first_text = text[:6000]
 
     title = base_extractor.infer_title(meta.get("title", ""), first_text, pdf_path.stem)
@@ -89,6 +107,7 @@ def extract_pdf_keyinfo_with_marker(pdf_path: Path) -> dict:
         "keywordsCandidate": keywords,
         "extractStatus": extract_status,
         "extractor": "marker",
+        "markdownPath": str(markdown_path),
         "textCharCount": len(text),
         "updatedAt": datetime.now().isoformat(timespec="seconds"),
         "fullText": text,
