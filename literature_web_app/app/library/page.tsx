@@ -22,7 +22,11 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   ).slice(0, 8);
 
   const categories = Array.from(
-    new Set(papers.map((paper) => paper.primaryCategory).filter(Boolean))
+    new Set(
+      papers
+        .map((paper) => paper.primaryCategory)
+        .filter((item): item is string => Boolean(item))
+    )
   );
 
   const filteredPapers = papers.filter((paper) => {
