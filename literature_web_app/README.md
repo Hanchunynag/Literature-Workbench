@@ -19,6 +19,7 @@
 
 ```bash
 npm install
+python3 -m pip install marker-pdf
 npm run dev
 ```
 
@@ -42,6 +43,13 @@ OPENROUTER_MODELS=openai/gpt-4.1-mini,anthropic/claude-3.5-sonnet,google/gemini-
 GROQ_API_KEY=
 GROQ_MODELS=llama-3.3-70b-versatile,qwen-qwq-32b
 
+HERMES_API_KEY=
+HERMES_BASE_URL=http://127.0.0.1:8642/v1
+HERMES_MODELS=hermes-agent
+
+PDF_PYTHON_BIN=python3
+PDF_EXTRACTOR_BACKEND=marker
+
 PAPER_CLASSIFIER_PROVIDER=
 PAPER_CLASSIFIER_MODEL=
 PAPER_SUMMARIZER_PROVIDER=
@@ -49,6 +57,41 @@ PAPER_SUMMARIZER_MODEL=
 ```
 
 如果不单独指定 `PAPER_CLASSIFIER_*` / `PAPER_SUMMARIZER_*`，系统会默认使用当前可用 provider 列表里的第一个。
+
+`PDF_EXTRACTOR_BACKEND` 可选值：
+
+- `marker`: 服务器推荐，使用 Marker 解析 PDF
+- `pypdf`: 使用当前轻量 `pypdf` 解析脚本
+- `langchain`: 使用 `LangChain + PyPDFLoader` 实验版
+
+## 服务器部署
+
+可以。你可以直接在服务器上把整个项目拉下来运行，但不是只 `git clone` 就结束，还需要安装依赖和配置环境变量。
+
+最小步骤：
+
+```bash
+git clone <your-repo>
+cd Literature-Workbench/literature_web_app
+npm install
+python3 -m pip install marker-pdf
+cp .env.example .env.local
+npm run build
+npm start
+```
+
+服务器至少需要：
+
+- Node.js 18+
+- Python 3.10+
+- `marker-pdf`
+- 可用的本地模型服务，或 Hermes/OpenAI-compatible 模型服务
+
+说明：
+
+- `PDF_EXTRACTOR_BACKEND=marker` 时，上传后的 PDF 会优先走 Marker 提取。
+- 上传的 PDF、数据库和分析结果都会落到服务器本地 `data/` 目录。
+- 如果你服务器上跑本地模型，可以把 `HERMES_BASE_URL` 指向服务器本机模型地址。
 
 ## 当前主链路
 
@@ -59,8 +102,8 @@ PAPER_SUMMARIZER_MODEL=
   -> 写入 papers 表
   -> processPaper(paperId)
      -> extract
-     -> classify
      -> summarize
+     -> validate
      -> save result
 ```
 
@@ -101,7 +144,7 @@ UPDATE_LOG.md
 - `app/api/papers/[id]/status/route.ts`: 获取处理状态
 - `app/api/papers/[id]/reprocess/route.ts`: 重新处理
 - `lib/db/*`: SQLite schema 与查询
-- `lib/pipeline/*`: 提取、分类、总结总流程
-- `lib/agents/*`: 分类与总结 agent
+- `lib/pipeline/*`: 提取、论文信息总结、校验总流程
+- `lib/agents/*`: 论文信息提炼与校验 agent
 - `components/upload-form.tsx`: 真实上传表单
 - `components/agent-playground.tsx`: 多模型试验台

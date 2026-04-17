@@ -535,7 +535,6 @@ export function listPapersNeedingMaintenance(limit = 4) {
         `
           SELECT p.id
           FROM papers p
-          LEFT JOIN paper_classifications c ON c.paper_id = p.id
           LEFT JOIN paper_summaries s ON s.paper_id = p.id
           WHERE p.status NOT IN ('extracting', 'classifying', 'summarizing')
             AND (
@@ -544,7 +543,6 @@ export function listPapersNeedingMaintenance(limit = 4) {
               OR p.title IS NULL
               OR TRIM(p.title) = ''
               OR p.extracted_char_count <= 0
-              OR c.paper_id IS NULL
               OR s.paper_id IS NULL
             )
           ORDER BY
@@ -569,7 +567,6 @@ export function countPapersNeedingMaintenance() {
       `
         SELECT COUNT(*) AS count
         FROM papers p
-        LEFT JOIN paper_classifications c ON c.paper_id = p.id
         LEFT JOIN paper_summaries s ON s.paper_id = p.id
         WHERE p.status NOT IN ('extracting', 'classifying', 'summarizing')
           AND (
@@ -578,7 +575,6 @@ export function countPapersNeedingMaintenance() {
             OR p.title IS NULL
             OR TRIM(p.title) = ''
             OR p.extracted_char_count <= 0
-            OR c.paper_id IS NULL
             OR s.paper_id IS NULL
           )
       `

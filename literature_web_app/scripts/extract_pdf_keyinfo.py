@@ -121,6 +121,29 @@ def is_reasonable_meta_value(value: str | None) -> bool:
     return value.lower() not in {"untitled", "unknown", "none"}
 
 
+def clean_author_candidates(items: list[str]) -> list[str]:
+    cleaned: list[str] = []
+    blocked_patterns = [
+        r"^\s*(senior member|member|fellow)\s*,?\s*ieee\s*$",
+        r"^\s*ieee\s*$",
+        r"^\s*(senior member|member|fellow)\s*$",
+        r"\b(university|department|laboratory|school|institute)\b",
+    ]
+
+    for item in items:
+        candidate = normalize_text(item).strip(" ,;")
+        if not candidate:
+            continue
+        lowered = candidate.lower()
+        if any(re.search(pattern, lowered, re.I) for pattern in blocked_patterns):
+            continue
+        if len(candidate) > 80:
+            continue
+        cleaned.append(candidate)
+
+    return list(dict.fromkeys(cleaned))[:12]
+
+
 def infer_title(meta_title: str, first_text: str, fallback_stem: str) -> str:
     if is_reasonable_meta_value(meta_title) and not looks_journal_metadata(meta_title):
         return normalize_text(meta_title)
@@ -186,7 +209,9 @@ def infer_year(text: str, pdf_name: str) -> str:
 
 def infer_authors(meta_author: str, first_text: str) -> list[str]:
     if is_reasonable_meta_value(meta_author) and meta_author.strip().lower() != "cnki":
-        return [item.strip() for item in re.split(r",|;| and ", meta_author) if item.strip()]
+        return clean_author_candidates(
+            [item.strip() for item in re.split(r",|;| and ", meta_author) if item.strip()]
+        )
 
     lines = [normalize_text(line) for line in first_text.splitlines()]
     lines = [line for line in lines if line]
@@ -201,7 +226,9 @@ def infer_authors(meta_author: str, first_text: str) -> list[str]:
         if re.search(r"\b(abstract|keywords|index terms|introduction)\b", line, re.I):
             continue
         if re.search(r"[A-Z][a-z]+ [A-Z][a-z]+", line) and ("," in line or " and " in line.lower()):
-            return [item.strip() for item in re.split(r",| and ", line) if item.strip()]
+            return clean_author_candidates(
+                [item.strip() for item in re.split(r",| and ", line) if item.strip()]
+            )
     return []
 
 
@@ -308,6 +335,34 @@ def extract_abstract(text: str) -> str:
     return clean_paragraph_text(abstract, max_lines=40)
 
 
+def extract_introduction_preview(text: str) -> str:
+    introduction = extract_section_by_heading(
+        text,
+        start_markers=["introduction", "引言"],
+        end_markers=[
+            "relatedwork",
+            "background",
+            "preliminaries",
+            "systemmodel",
+            "problemformulation",
+            "method",
+            "methods",
+            "proposedmethod",
+            "approach",
+            "algorithm",
+            "experiment",
+            "experiments",
+            "results",
+            "discussion",
+            "conclusion",
+            "conclusions",
+            "结论",
+        ],
+        max_chars=3500,
+    )
+    return clean_paragraph_text(introduction, max_lines=35)
+
+
 def extract_keywords_section(text: str) -> list[str]:
     section = extract_section_by_heading(
         text,
@@ -353,7 +408,7 @@ def extract_conclusion_preview(text: str) -> str:
     return clean_paragraph_text(conclusion, max_lines=35)
 
 
-def build_clean_summary(result: dict, abstract: str, conclusion: str) -> str:
+def build_clean_summary(result: dict, abstract: str, introduction: str, conclusion: str) -> str:
     parts = [
         "## Basic Info",
         f"- title: {result['title'] or 'UNKNOWN'}",
@@ -365,6 +420,9 @@ def build_clean_summary(result: dict, abstract: str, conclusion: str) -> str:
         "",
         "## Abstract",
         abstract or "NOT_FOUND",
+        "",
+        "## Introduction Preview",
+        introduction or "NOT_FOUND",
         "",
         "## Conclusion Preview",
         conclusion or "NOT_FOUND",
@@ -392,6 +450,7 @@ def extract_pdf_keyinfo(pdf_path: Path) -> dict:
     authors = infer_authors(meta.get("author", ""), first_text)
     year = infer_year(first_text, pdf_path.name)
     abstract = extract_abstract(text)
+    introduction = extract_introduction_preview(text)
     conclusion = extract_conclusion_preview(text)
     keywords = extract_keywords_section(text)
 
@@ -417,11 +476,11 @@ def extract_pdf_keyinfo(pdf_path: Path) -> dict:
         "fullText": text,
         "previewText": text[:20000],
         "abstractText": abstract,
-        "introductionPreview": "",
+        "introductionPreview": introduction,
         "contributionExcerpt": "",
         "conclusionPreview": conclusion,
     }
-    result["cleanSummary"] = build_clean_summary(result, abstract, conclusion)
+    result["cleanSummary"] = build_clean_summary(result, abstract, introduction, conclusion)
     return result
 
 

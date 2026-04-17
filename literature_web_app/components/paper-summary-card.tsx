@@ -18,12 +18,12 @@ export function PaperSummaryCard({ summary }: PaperSummaryCardProps) {
       </article>
 
       <article className="panel">
-        <h2>适用性判断</h2>
+        <h2>边界条件概述</h2>
         <p>{summary.relevanceNote}</p>
       </article>
 
       <article className="panel">
-        <h2>创新性判断</h2>
+        <h2>创新点概述</h2>
         <p>{summary.innovationNote}</p>
       </article>
 
@@ -46,7 +46,7 @@ export function PaperSummaryCard({ summary }: PaperSummaryCardProps) {
       </article>
 
       <article className="panel">
-        <h2>对当前研究的启发</h2>
+        <h2>关键前提与适用条件</h2>
         <ul className="clean-list">
           {summary.usefulToMyTopic.map((item) => (
             <li key={item}>{item}</li>
@@ -64,7 +64,7 @@ export function PaperSummaryCard({ summary }: PaperSummaryCardProps) {
       </article>
 
       <article className="panel">
-        <h2>可延展设想</h2>
+        <h2>校验备注</h2>
         <ul className="clean-list">
           {summary.candidateIdeas.map((item) => (
             <li key={item}>{item}</li>

@@ -40,6 +40,13 @@ function deriveAuthors(rawAuthor?: unknown) {
   return rawAuthor
     .split(/[,;]+/)
     .map((item) => item.trim())
+    .filter(
+      (item) =>
+        item.length > 0 &&
+        !/^(senior member|member|fellow)\s*,?\s*ieee$/i.test(item) &&
+        !/^(senior member|member|fellow)$/i.test(item) &&
+        !/^ieee$/i.test(item)
+    )
     .filter(Boolean)
     .slice(0, 8);
 }

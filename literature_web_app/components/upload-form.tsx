@@ -135,7 +135,7 @@ export function UploadForm() {
           <li>上传前会按 PDF 内容去重，重复论文不会再次进入处理流程。</li>
           <li>一次可以上传多个 PDF，但后台会逐文件提取、逐文件发给 Hermes，不会混发。</li>
           <li>上传成功后立即创建论文记录并异步触发处理。</li>
-          <li>处理状态会经历 uploaded / extracting / classifying / summarizing / ready / failed。</li>
+          <li>处理状态会经历 uploaded / extracting / summarizing / ready / failed。</li>
         </ul>
       </aside>
 

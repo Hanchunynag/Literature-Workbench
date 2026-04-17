@@ -29,8 +29,22 @@ function getPythonBin() {
   return process.env.PDF_PYTHON_BIN?.trim() || "python3";
 }
 
+function getExtractorBackend() {
+  return process.env.PDF_EXTRACTOR_BACKEND?.trim().toLowerCase() || "marker";
+}
+
 function getExtractorScriptPath() {
-  return path.join(process.cwd(), "scripts", "extract_pdf_keyinfo.py");
+  const backend = getExtractorBackend();
+
+  if (backend === "pypdf") {
+    return path.join(process.cwd(), "scripts", "extract_pdf_keyinfo.py");
+  }
+
+  if (backend === "langchain") {
+    return path.join(process.cwd(), "scripts", "extract_pdf_keyinfo_langchain.py");
+  }
+
+  return path.join(process.cwd(), "scripts", "extract_pdf_keyinfo_marker.py");
 }
 
 export async function extractPdfKeyInfoWithPython(pdfPath: string) {

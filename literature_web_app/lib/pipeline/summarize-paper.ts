@@ -1,4 +1,3 @@
-import type { ClassificationOutput } from "@/lib/agents/classifier-agent";
 import { summarizeWithAgent } from "@/lib/agents/summarizer-agent";
 
 export async function summarizePaper(input: {
@@ -13,7 +12,6 @@ export async function summarizePaper(input: {
   conclusionExcerpt?: string;
   keywords?: string[];
   extractedText: string;
-  classification: ClassificationOutput;
 }) {
   return {
     data: await summarizeWithAgent(input),

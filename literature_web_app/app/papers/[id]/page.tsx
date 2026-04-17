@@ -86,7 +86,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
             <h2>处理状态</h2>
             <p>当前状态：{paper.status}</p>
             {paper.errorMessage ? <p>错误信息：{paper.errorMessage}</p> : null}
-            <p>上传后后台会依次执行提取、分类、总结。刷新页面即可查看最新结果。</p>
+            <p>上传后后台会依次执行提取、论文信息总结与校验。刷新页面即可查看最新结果。</p>
           </article>
         ) : null}
       </section>

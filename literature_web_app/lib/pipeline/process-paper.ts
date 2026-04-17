@@ -1,14 +1,12 @@
 import {
   clearPaperAnalysis,
   getPaperRecord,
-  saveClassification,
   saveExtraction,
   saveSummary,
   updatePaperError,
   updatePaperRecognition,
   updatePaperStatus
 } from "@/lib/db/papers";
-import { classifyPaper } from "@/lib/pipeline/classify-paper";
 import { extractPaper } from "@/lib/pipeline/extract-paper";
 import { deriveRecognitionState } from "@/lib/pipeline/recognition-state";
 import { summarizePaper } from "@/lib/pipeline/summarize-paper";
@@ -39,23 +37,6 @@ export async function processPaper(paperId: string) {
       extractedText: extracted.extractedText
     });
 
-    updatePaperStatus(paperId, "classifying");
-    const classification = await classifyPaper({
-      paperId,
-      batchId: paper.batchId,
-      fileId: paper.fileId,
-      fileName: paper.originalFileName,
-      title: extracted.title ?? paper.originalFileName,
-      authors: extracted.authors,
-      year: extracted.year,
-      abstractText: extracted.abstractText,
-      conclusionExcerpt: extracted.conclusionPreview,
-      keywords: extracted.keywordsCandidate,
-      extractedText: extracted.extractedText
-    });
-    saveClassification(paperId, classification.data);
-    await saveAnalysisArtifact(paperId, "classification", classification.data);
-
     updatePaperStatus(paperId, "summarizing");
     const summary = await summarizePaper({
       paperId,
@@ -68,8 +49,7 @@ export async function processPaper(paperId: string) {
       abstractText: extracted.abstractText,
       conclusionExcerpt: extracted.conclusionPreview,
       keywords: extracted.keywordsCandidate,
-      extractedText: extracted.extractedText,
-      classification: classification.data
+      extractedText: extracted.extractedText
     });
     saveSummary(paperId, summary.data);
     await saveAnalysisArtifact(paperId, "summary", summary.data);
@@ -78,13 +58,13 @@ export async function processPaper(paperId: string) {
       title: extracted.title ?? paper.originalFileName,
       extractedText: extracted.extractedText,
       shortSummary: summary.data.shortSummary,
-      usedAgent: classification.source === "agent" && summary.source === "agent"
+      usedAgent: summary.source === "agent"
     });
 
     updatePaperRecognition(paperId, {
       recognitionState: recognition.recognitionState,
       recognitionNote: recognition.recognitionNote,
-      agentProcessed: classification.source === "agent" && summary.source === "agent"
+      agentProcessed: summary.source === "agent"
     });
 
     updatePaperStatus(paperId, "ready");
