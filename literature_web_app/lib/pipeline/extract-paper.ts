@@ -84,9 +84,10 @@ export async function extractPaper(paper: PaperRecord) {
       title: pythonResult.title || deriveTitle(paper.originalFileName, extractedText),
       year: pythonResult.year ? Number(pythonResult.year) || null : null,
       authors: pythonResult.authors ?? [],
+      markdownPath: pythonResult.markdownPath ?? null,
       extractedText,
       abstractText: normalizeExtractedText(pythonResult.abstractText ?? ""),
-      introductionPreview: "",
+      introductionPreview: normalizeExtractedText(pythonResult.introductionPreview ?? ""),
       contributionExcerpt: "",
       conclusionPreview: normalizeExtractedText(pythonResult.conclusionPreview ?? ""),
       keywordsCandidate: pythonResult.keywordsCandidate ?? [],
@@ -118,13 +119,18 @@ export async function extractPaper(paper: PaperRecord) {
     title: deriveTitle(paper.originalFileName, extractedText, parsed.info?.Title),
     year: deriveYear(String(parsed.info?.CreationDate ?? paper.originalFileName)),
     authors: deriveAuthors(parsed.info?.Author),
+    markdownPath: null,
     extractedText,
     abstractText: extractSectionSnippet(
       extractedText,
       [/^(abstract|摘\s*要|【?摘要】?|“?摘要”?|「?摘要」?)/i],
       [/abstract/i, /摘\s*要/, /【?摘要】?/, /“?摘要”?/, /「?摘要」?/]
     ),
-    introductionPreview: "",
+    introductionPreview: extractSectionSnippet(
+      extractedText,
+      [/^(introduction|引\s*言|绪论|【?引言】?|“?引言”?|「?引言」?)/i],
+      [/introduction/i, /引\s*言/, /绪论/, /【?引言】?/, /“?引言”?/, /「?引言」?/]
+    ),
     contributionExcerpt: "",
     conclusionPreview: extractSectionSnippet(
       extractedText,

@@ -1,27 +1,45 @@
+import { readFile } from "fs/promises";
+
 import { z } from "zod";
 
 import { Agent } from "@/lib/agents/sdk";
 import { buildAgentModel } from "@/lib/agents/build-model";
 import { parseStructuredAgentJson } from "@/lib/agents/json-output";
 import { buildPaperAnalysisProtocol } from "@/lib/agents/paper-analysis-protocol";
-import { summarizerPrompt, summaryValidatorPrompt } from "@/lib/agents/prompts";
+import {
+  PRIMARY_CATEGORIES,
+  SUBCATEGORY_CANDIDATES,
+  summarizerPrompt,
+  summaryValidatorPrompt
+} from "@/lib/agents/prompts";
 import { saveAgentExchangeArtifact } from "@/lib/storage/file-store";
 
-export const summarySchema = z.object({
+export const analysisSchema = z.object({
   batchId: z.string(),
   fileId: z.string(),
+  title: z.string(),
+  researchQuestion: z.string(),
+  coreMethod: z.string(),
   shortSummary: z.string(),
   coreContribution: z.string(),
   relevanceNote: z.string(),
   innovationNote: z.string(),
-  whatThisPaperDoes: z.array(z.string()).min(2).max(5),
-  claimedInnovations: z.array(z.string()).min(1).max(4),
-  usefulToMyTopic: z.array(z.string()).min(1).max(4),
-  limitations: z.array(z.string()).min(1).max(4),
-  candidateIdeas: z.array(z.string()).max(3)
+  whatThisPaperDoes: z.array(z.string()).min(2).max(6),
+  claimedInnovations: z.array(z.string()).min(1).max(5),
+  usefulToMyTopic: z.array(z.string()).min(1).max(5),
+  limitations: z.array(z.string()).min(1).max(5),
+  candidateIdeas: z.array(z.string()).max(5),
+  experimentalMethodology: z.string(),
+  performanceMetrics: z.array(z.string()).max(5),
+  primaryCategory: z.enum(PRIMARY_CATEGORIES),
+  subcategories: z.array(z.enum(SUBCATEGORY_CANDIDATES)).max(3),
+  tags: z.array(z.string()).max(6),
+  keywords: z.array(z.string()).max(6),
+  confidence: z.number().min(0).max(1),
+  needsReview: z.boolean()
 });
 
-export type SummaryOutput = z.infer<typeof summarySchema>;
+export type PaperAnalysisOutput = z.infer<typeof analysisSchema>;
 
 function unique(items: string[]) {
   return Array.from(new Set(items.filter(Boolean)));
@@ -41,31 +59,83 @@ function extractPreferredTerms(input: {
     /[A-Z]{2,}|[A-Za-z]+-[A-Za-z]+|[A-Za-z]{4,}/.test(item)
   );
 
-  return unique([...matchedTerms, ...keywordTerms]).slice(0, 20);
+  return unique([...matchedTerms, ...keywordTerms]).slice(0, 24);
 }
 
-function normalizeSummaryTerminology(summary: SummaryOutput, preferredTerms: string[]) {
+function normalizeAnalysisTerminology(
+  analysis: PaperAnalysisOutput,
+  preferredTerms: string[]
+) {
   const matrixPencilTerm = preferredTerms.find((term) => /matrix pencil/i.test(term));
 
   if (!matrixPencilTerm) {
-    return summary;
+    return analysis;
   }
 
   const replaceLiteralTranslation = (value: string) =>
     value.replace(/矩阵铅笔(?:算法)?/g, matrixPencilTerm);
 
   return {
-    ...summary,
-    shortSummary: replaceLiteralTranslation(summary.shortSummary),
-    coreContribution: replaceLiteralTranslation(summary.coreContribution),
-    relevanceNote: replaceLiteralTranslation(summary.relevanceNote),
-    innovationNote: replaceLiteralTranslation(summary.innovationNote),
-    whatThisPaperDoes: summary.whatThisPaperDoes.map(replaceLiteralTranslation),
-    claimedInnovations: summary.claimedInnovations.map(replaceLiteralTranslation),
-    usefulToMyTopic: summary.usefulToMyTopic.map(replaceLiteralTranslation),
-    limitations: summary.limitations.map(replaceLiteralTranslation),
-    candidateIdeas: summary.candidateIdeas.map(replaceLiteralTranslation)
+    ...analysis,
+    title: replaceLiteralTranslation(analysis.title),
+    researchQuestion: replaceLiteralTranslation(analysis.researchQuestion),
+    coreMethod: replaceLiteralTranslation(analysis.coreMethod),
+    shortSummary: replaceLiteralTranslation(analysis.shortSummary),
+    coreContribution: replaceLiteralTranslation(analysis.coreContribution),
+    relevanceNote: replaceLiteralTranslation(analysis.relevanceNote),
+    innovationNote: replaceLiteralTranslation(analysis.innovationNote),
+    experimentalMethodology: replaceLiteralTranslation(analysis.experimentalMethodology),
+    whatThisPaperDoes: analysis.whatThisPaperDoes.map(replaceLiteralTranslation),
+    claimedInnovations: analysis.claimedInnovations.map(replaceLiteralTranslation),
+    usefulToMyTopic: analysis.usefulToMyTopic.map(replaceLiteralTranslation),
+    limitations: analysis.limitations.map(replaceLiteralTranslation),
+    candidateIdeas: analysis.candidateIdeas.map(replaceLiteralTranslation),
+    performanceMetrics: analysis.performanceMetrics.map(replaceLiteralTranslation),
+    tags: analysis.tags.map(replaceLiteralTranslation),
+    keywords: analysis.keywords.map(replaceLiteralTranslation)
   };
+}
+
+const DEFAULT_MAX_MARKDOWN_CHARS = 120_000;
+
+function getMaxMarkdownChars() {
+  const configured = Number(process.env.PAPER_MARKDOWN_MAX_CHARS ?? "");
+
+  if (Number.isFinite(configured) && configured >= 10_000) {
+    return Math.floor(configured);
+  }
+
+  return DEFAULT_MAX_MARKDOWN_CHARS;
+}
+
+async function loadMarkdownContext(markdownPath: string | null | undefined, extractedText: string) {
+  if (!markdownPath) {
+    return {
+      markdownPath: null,
+      markdownContent: extractedText,
+      markdownTotalChars: extractedText.length,
+      markdownTruncated: false
+    };
+  }
+
+  try {
+    const markdownContent = await readFile(markdownPath, "utf-8");
+    const maxChars = getMaxMarkdownChars();
+
+    return {
+      markdownPath,
+      markdownContent: markdownContent.slice(0, maxChars),
+      markdownTotalChars: markdownContent.length,
+      markdownTruncated: markdownContent.length > maxChars
+    };
+  } catch {
+    return {
+      markdownPath,
+      markdownContent: extractedText,
+      markdownTotalChars: extractedText.length,
+      markdownTruncated: false
+    };
+  }
 }
 
 export async function summarizeWithAgent(input: {
@@ -77,8 +147,10 @@ export async function summarizeWithAgent(input: {
   authors?: string[];
   year: number | null;
   abstractText?: string;
+  introductionPreview?: string;
   conclusionExcerpt?: string;
   keywords?: string[];
+  markdownPath?: string | null;
   extractedText: string;
 }) {
   const builtModel = buildAgentModel({
@@ -87,10 +159,12 @@ export async function summarizeWithAgent(input: {
   });
 
   const agent = new Agent({
-    name: "Paper Summarizer",
+    name: "Paper Analyzer",
     model: builtModel.model,
     instructions: summarizerPrompt
   });
+
+  const markdownContext = await loadMarkdownContext(input.markdownPath, input.extractedText);
 
   const protocolPayload = buildPaperAnalysisProtocol({
     batchId: input.batchId,
@@ -100,8 +174,13 @@ export async function summarizeWithAgent(input: {
     authors: input.authors,
     year: input.year,
     abstractText: input.abstractText,
+    introductionPreview: input.introductionPreview,
     conclusionExcerpt: input.conclusionExcerpt,
-    keywords: input.keywords
+    keywords: input.keywords,
+    markdownPath: markdownContext.markdownPath,
+    markdownContent: markdownContext.markdownContent,
+    markdownTotalChars: markdownContext.markdownTotalChars,
+    markdownTruncated: markdownContext.markdownTruncated
   });
   const requestBody = JSON.stringify(protocolPayload, null, 2);
   const preferredTerms = extractPreferredTerms(input);
@@ -115,17 +194,17 @@ export async function summarizeWithAgent(input: {
 
     await saveAgentExchangeArtifact({
       paperId: input.paperId,
-      type: "summary",
+      type: "analysis",
       attempt: attemptNumber,
       payload: {
         status: "pending",
-        phase: "summary",
+        phase: "analysis",
         attempt: attemptNumber,
         startedAt,
         providerId: builtModel.providerId,
         providerLabel: builtModel.providerLabel,
         model: builtModel.modelName,
-        agentName: "Paper Summarizer",
+        agentName: "Paper Analyzer",
         instructions: summarizerPrompt,
         requestPayload: protocolPayload,
         requestBody,
@@ -134,16 +213,13 @@ export async function summarizeWithAgent(input: {
     });
 
     try {
-      const result = await builtModel.runner.run(
-        agent,
-        requestBody
-      );
+      const result = await builtModel.runner.run(agent, requestBody);
       rawOutput = String(result.finalOutput ?? "");
 
       const draftParsed = parseStructuredAgentJson(
         rawOutput,
-        summarySchema,
-        "论文信息提炼结果",
+        analysisSchema,
+        "论文分析结果",
         {
           batchId: input.batchId,
           fileId: input.fileId
@@ -151,7 +227,7 @@ export async function summarizeWithAgent(input: {
       );
 
       const validationAgent = new Agent({
-        name: "Paper Summary Validator",
+        name: "Paper Analysis Validator",
         model: builtModel.model,
         instructions: summaryValidatorPrompt
       });
@@ -159,16 +235,16 @@ export async function summarizeWithAgent(input: {
       const validationPayload = {
         source_protocol: protocolPayload,
         preferred_terms: preferredTerms,
-        draft_summary: draftParsed
+        draft_analysis: draftParsed
       };
       const validationRequestBody = JSON.stringify(validationPayload, null, 2);
       const validationResult = await builtModel.runner.run(validationAgent, validationRequestBody);
       const validationRawOutput = String(validationResult.finalOutput ?? "");
-      const validatedParsed = normalizeSummaryTerminology(
+      const validatedParsed = normalizeAnalysisTerminology(
         parseStructuredAgentJson(
           validationRawOutput,
-          summarySchema,
-          "论文信息校验结果",
+          analysisSchema,
+          "论文分析校验结果",
           {
             batchId: input.batchId,
             fileId: input.fileId
@@ -179,18 +255,18 @@ export async function summarizeWithAgent(input: {
 
       await saveAgentExchangeArtifact({
         paperId: input.paperId,
-        type: "summary",
+        type: "analysis",
         attempt: attemptNumber,
         payload: {
           status: "succeeded",
-          phase: "summary",
+          phase: "analysis",
           attempt: attemptNumber,
           startedAt,
           finishedAt: new Date().toISOString(),
           providerId: builtModel.providerId,
           providerLabel: builtModel.providerLabel,
           model: builtModel.modelName,
-          agentName: "Paper Summarizer",
+          agentName: "Paper Analyzer",
           instructions: {
             summarizerPrompt,
             summaryValidatorPrompt
@@ -211,18 +287,18 @@ export async function summarizeWithAgent(input: {
     } catch (error) {
       await saveAgentExchangeArtifact({
         paperId: input.paperId,
-        type: "summary",
+        type: "analysis",
         attempt: attemptNumber,
         payload: {
           status: "failed",
-          phase: "summary",
+          phase: "analysis",
           attempt: attemptNumber,
           startedAt,
           finishedAt: new Date().toISOString(),
           providerId: builtModel.providerId,
           providerLabel: builtModel.providerLabel,
           model: builtModel.modelName,
-          agentName: "Paper Summarizer",
+          agentName: "Paper Analyzer",
           instructions: {
             summarizerPrompt,
             summaryValidatorPrompt
@@ -238,5 +314,5 @@ export async function summarizeWithAgent(input: {
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error("总结失败。");
+  throw lastError instanceof Error ? lastError : new Error("论文分析失败。");
 }

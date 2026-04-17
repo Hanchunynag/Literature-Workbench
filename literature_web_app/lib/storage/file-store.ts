@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "fs";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 
@@ -57,9 +58,11 @@ export async function saveExtractedArtifact(paperId: string, payload: unknown) {
   return absolutePath;
 }
 
+export type AnalysisArtifactType = "analysis" | "classification" | "summary";
+
 export async function saveAnalysisArtifact(
   paperId: string,
-  type: "classification" | "summary",
+  type: AnalysisArtifactType,
   payload: unknown
 ) {
   await ensureStorageDirectories();
@@ -70,7 +73,7 @@ export async function saveAnalysisArtifact(
 
 export async function saveAgentExchangeArtifact(input: {
   paperId: string;
-  type: "classification" | "summary";
+  type: AnalysisArtifactType;
   attempt: number;
   payload: unknown;
 }) {
@@ -80,4 +83,18 @@ export async function saveAgentExchangeArtifact(input: {
   const absolutePath = path.join(logDirectory, `${input.type}.attempt-${input.attempt}.json`);
   await writeFile(absolutePath, JSON.stringify(input.payload, null, 2), "utf-8");
   return absolutePath;
+}
+
+export function readAnalysisArtifactSync<T>(paperId: string, type: AnalysisArtifactType) {
+  const absolutePath = path.join(analysisPapersRoot, `${paperId}.${type}.json`);
+
+  if (!existsSync(absolutePath)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(readFileSync(absolutePath, "utf-8")) as T;
+  } catch {
+    return null;
+  }
 }

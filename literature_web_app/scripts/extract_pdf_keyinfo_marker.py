@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -27,22 +28,42 @@ else:
     IMPORT_ERROR = None
 
 
-def get_markdown_output_dir() -> Path:
+def infer_batch_id(pdf_path: Path) -> str:
+    parent_name = pdf_path.parent.name.strip()
+    return parent_name or "unbatched"
+
+
+def get_markdown_output_dir(pdf_path: Path) -> Path:
     configured = os.environ.get("MARKER_MARKDOWN_DIR", "").strip()
+    batch_id = infer_batch_id(pdf_path)
     if configured:
-        return Path(configured).expanduser().resolve()
-    return (Path.cwd() / "data" / "papers" / "extracted_markdown").resolve()
+        return (Path(configured).expanduser().resolve() / batch_id).resolve()
+    return (Path.cwd() / "data" / "papers" / "extracted_markdown" / batch_id).resolve()
 
 
-def save_markdown_output(pdf_path: Path, markdown: str) -> Path:
-    output_dir = get_markdown_output_dir()
+def sanitize_markdown_name_part(value: str) -> str:
+    cleaned = re.sub(r'[\\/:*?"<>|]+', "_", value)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    cleaned = cleaned.strip("._")
+    return cleaned[:180] or "untitled"
+
+
+def build_markdown_file_name(pdf_path: Path, year: str | int | None, title: str) -> str:
+    year_text = str(year).strip() if year not in (None, "") else "unknown_year"
+    safe_year = sanitize_markdown_name_part(year_text)
+    safe_title = sanitize_markdown_name_part(title or pdf_path.stem)
+    return f"{safe_year}_{safe_title}.md"
+
+
+def save_markdown_output(pdf_path: Path, markdown: str, year: str | int | None, title: str) -> Path:
+    output_dir = get_markdown_output_dir(pdf_path)
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{pdf_path.stem}.md"
+    output_path = output_dir / build_markdown_file_name(pdf_path, year, title)
     output_path.write_text(markdown, encoding="utf-8")
     return output_path
 
 
-def extract_text_marker(pdf_path: Path) -> tuple[str, int, Path]:
+def extract_text_marker(pdf_path: Path) -> tuple[str, int, str]:
     if PdfConverter is None or ConfigParser is None or create_model_dict is None or text_from_rendered is None:
         raise RuntimeError(
             "marker-pdf 未安装，无法使用 Marker 解析 PDF。"
@@ -65,25 +86,25 @@ def extract_text_marker(pdf_path: Path) -> tuple[str, int, Path]:
 
     rendered = converter(str(pdf_path))
     markdown = getattr(rendered, "markdown", "") or ""
-    markdown_path = save_markdown_output(pdf_path, markdown)
     text, _, _ = text_from_rendered(rendered)
     page_count = len(getattr(rendered, "metadata", []) or [])
 
     if page_count == 0:
         page_count = text.count("\f") + 1 if text else 0
 
-    return base_extractor.normalize_text(text), page_count, markdown_path
+    return base_extractor.normalize_text(text), page_count, markdown
 
 
 def extract_pdf_keyinfo_with_marker(pdf_path: Path) -> dict:
     meta = base_extractor.read_metadata_pypdf(pdf_path)
 
-    text, page_count, markdown_path = extract_text_marker(pdf_path)
+    text, page_count, markdown = extract_text_marker(pdf_path)
     first_text = text[:6000]
 
     title = base_extractor.infer_title(meta.get("title", ""), first_text, pdf_path.stem)
     authors = base_extractor.infer_authors(meta.get("author", ""), first_text)
     year = base_extractor.infer_year(first_text, pdf_path.name)
+    markdown_path = save_markdown_output(pdf_path, markdown, year, title)
     abstract = base_extractor.extract_abstract(text)
     introduction = base_extractor.extract_introduction_preview(text)
     conclusion = base_extractor.extract_conclusion_preview(text)

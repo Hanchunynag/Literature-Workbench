@@ -36,6 +36,7 @@ export type PaperRecord = {
   recognitionState: PaperRecognitionState;
   recognitionNote: string | null;
   agentProcessed: boolean;
+  markdownPath: string | null;
   extractedText: string | null;
   extractedCharCount: number;
   errorMessage: string | null;

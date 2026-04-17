@@ -62,10 +62,14 @@ function normalizeStructuredPayload(payload: unknown) {
   const stringFields = [
     "batchId",
     "fileId",
+    "title",
+    "researchQuestion",
+    "coreMethod",
     "shortSummary",
     "coreContribution",
     "relevanceNote",
-    "innovationNote"
+    "innovationNote",
+    "experimentalMethodology"
   ];
   const arrayFields = [
     "subcategories",
@@ -75,17 +79,19 @@ function normalizeStructuredPayload(payload: unknown) {
     "claimedInnovations",
     "usefulToMyTopic",
     "limitations",
-    "candidateIdeas"
+    "candidateIdeas",
+    "performanceMetrics"
   ];
   const arrayLimits: Record<string, number> = {
-    subcategories: 6,
-    tags: 8,
-    keywords: 8,
-    whatThisPaperDoes: 5,
-    claimedInnovations: 4,
-    usefulToMyTopic: 4,
-    limitations: 4,
-    candidateIdeas: 3
+    subcategories: 3,
+    tags: 6,
+    keywords: 6,
+    whatThisPaperDoes: 6,
+    claimedInnovations: 5,
+    usefulToMyTopic: 5,
+    limitations: 5,
+    candidateIdeas: 5,
+    performanceMetrics: 5
   };
 
   for (const field of stringFields) {

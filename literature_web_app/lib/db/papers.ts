@@ -2,6 +2,8 @@ import { randomUUID } from "crypto";
 
 import { getDb } from "@/lib/db/client";
 import { ensureSchema } from "@/lib/db/schema";
+import { readAnalysisArtifactSync } from "@/lib/storage/file-store";
+import type { PaperAnalysis } from "@/lib/types/analysis";
 import type { PaperClassification } from "@/lib/types/classification";
 import type {
   PaperRecognitionState,
@@ -28,6 +30,7 @@ type PaperRow = {
   recognition_state: PaperRecognitionState;
   recognition_note: string | null;
   agent_processed: number;
+  markdown_path: string | null;
   extracted_text: string | null;
   extracted_char_count: number;
   error_message: string | null;
@@ -96,6 +99,7 @@ function mapPaper(row: PaperRow): PaperRecord {
     recognitionState: row.recognition_state,
     recognitionNote: row.recognition_note,
     agentProcessed: Boolean(row.agent_processed),
+    markdownPath: row.markdown_path,
     extractedText: row.extracted_text,
     extractedCharCount: row.extracted_char_count,
     errorMessage: row.error_message,
@@ -163,11 +167,11 @@ export function createPaper(input: {
     `
       INSERT INTO papers (
         id, file_hash, batch_id, file_id, title, year, authors_json, original_file_name, stored_file_name, file_path,
-        topic, note, status, recognition_state, recognition_note, agent_processed,
+        topic, note, status, recognition_state, recognition_note, agent_processed, markdown_path,
         extracted_text, extracted_char_count, error_message, created_at, updated_at
       ) VALUES (
         @id, @fileHash, @batchId, @fileId, NULL, NULL, '[]', @originalFileName, @storedFileName, @filePath,
-        @topic, @note, 'uploaded', 'pending', NULL, 0, NULL, 0, NULL, @createdAt, @updatedAt
+        @topic, @note, 'uploaded', 'pending', NULL, 0, NULL, NULL, 0, NULL, @createdAt, @updatedAt
       )
     `
   ).run({
@@ -278,6 +282,7 @@ export function saveExtraction(
     title: string | null;
     year: number | null;
     authors: string[];
+    markdownPath?: string | null;
     extractedText: string;
   }
 ) {
@@ -290,6 +295,7 @@ export function saveExtraction(
       SET title = @title,
           year = @year,
           authors_json = @authorsJson,
+          markdown_path = @markdownPath,
           extracted_text = @extractedText,
           extracted_char_count = @extractedCharCount,
           updated_at = @updatedAt
@@ -300,6 +306,7 @@ export function saveExtraction(
     title: payload.title,
     year: payload.year,
     authorsJson: JSON.stringify(payload.authors),
+    markdownPath: payload.markdownPath ?? null,
     extractedText: payload.extractedText,
     extractedCharCount: payload.extractedText.length,
     updatedAt: now()
@@ -466,7 +473,8 @@ export function getPaperDetail(paperId: string) {
   return {
     paper: mapPaper(paperRow),
     classification: mapClassification(classificationRow),
-    summary: mapSummary(summaryRow)
+    summary: mapSummary(summaryRow),
+    analysis: readAnalysisArtifactSync<PaperAnalysis>(paperId, "analysis")
   };
 }
 

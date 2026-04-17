@@ -9,8 +9,10 @@ export async function summarizePaper(input: {
   authors?: string[];
   year: number | null;
   abstractText?: string;
+  introductionPreview?: string;
   conclusionExcerpt?: string;
   keywords?: string[];
+  markdownPath?: string | null;
   extractedText: string;
 }) {
   return {

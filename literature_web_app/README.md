@@ -67,7 +67,7 @@ PAPER_SUMMARIZER_MODEL=
 
 `MARKER_MARKDOWN_DIR`：
 
-- 留空时，默认保存到 `data/papers/extracted_markdown/`
+- 留空时，默认保存到 `data/papers/extracted_markdown/<batchId>/`
 - 如果你想改到别的目录，可以填绝对路径
 
 ## 服务器部署
@@ -96,7 +96,9 @@ npm start
 说明：
 
 - `PDF_EXTRACTOR_BACKEND=marker` 时，上传后的 PDF 会优先走 Marker 提取。
-- Marker 脚本会关闭图片提取，并把正文 markdown 自动保存到 `data/papers/extracted_markdown/` 或你指定的 `MARKER_MARKDOWN_DIR`。
+- Marker 脚本会关闭图片提取，并把正文 markdown 自动保存到 `data/papers/extracted_markdown/<batchId>/` 或你指定的 `MARKER_MARKDOWN_DIR/<batchId>/`。
+- Markdown 文件名默认按 `年份_题目名.md` 生成，便于后续按 batch 做处理。
+- 上传后会由单个分析 agent 一次读取 markdown，并输出完整 JSON，其中同时包含详细论文分析字段和受约束分类字段。
 - Marker 脚本默认固定 `CUDA_VISIBLE_DEVICES=0`，会优先使用 `GPU 0` 跑转换。
 - 上传的 PDF、数据库和分析结果都会落到服务器本地 `data/` 目录。
 - 如果你服务器上跑本地模型，可以把 `HERMES_BASE_URL` 指向服务器本机模型地址。

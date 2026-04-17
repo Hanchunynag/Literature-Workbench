@@ -1,6 +1,7 @@
 import {
   clearPaperAnalysis,
   getPaperRecord,
+  saveClassification,
   saveExtraction,
   saveSummary,
   updatePaperError,
@@ -34,6 +35,7 @@ export async function processPaper(paperId: string) {
       title: extracted.title,
       year: extracted.year,
       authors: extracted.authors,
+      markdownPath: extracted.markdownPath,
       extractedText: extracted.extractedText
     });
 
@@ -47,12 +49,54 @@ export async function processPaper(paperId: string) {
       authors: extracted.authors,
       year: extracted.year,
       abstractText: extracted.abstractText,
+      introductionPreview: extracted.introductionPreview,
       conclusionExcerpt: extracted.conclusionPreview,
       keywords: extracted.keywordsCandidate,
+      markdownPath: extracted.markdownPath,
       extractedText: extracted.extractedText
     });
-    saveSummary(paperId, summary.data);
-    await saveAnalysisArtifact(paperId, "summary", summary.data);
+    await saveAnalysisArtifact(paperId, "analysis", summary.data);
+    saveSummary(paperId, {
+      shortSummary: summary.data.shortSummary,
+      coreContribution: summary.data.coreContribution,
+      relevanceNote: summary.data.relevanceNote,
+      innovationNote: summary.data.innovationNote,
+      whatThisPaperDoes: summary.data.whatThisPaperDoes,
+      claimedInnovations: summary.data.claimedInnovations,
+      usefulToMyTopic: summary.data.usefulToMyTopic,
+      limitations: summary.data.limitations,
+      candidateIdeas: summary.data.candidateIdeas
+    });
+    await saveAnalysisArtifact(paperId, "summary", {
+      paperId,
+      shortSummary: summary.data.shortSummary,
+      coreContribution: summary.data.coreContribution,
+      relevanceNote: summary.data.relevanceNote,
+      innovationNote: summary.data.innovationNote,
+      whatThisPaperDoes: summary.data.whatThisPaperDoes,
+      claimedInnovations: summary.data.claimedInnovations,
+      usefulToMyTopic: summary.data.usefulToMyTopic,
+      limitations: summary.data.limitations,
+      candidateIdeas: summary.data.candidateIdeas
+    });
+    saveClassification(paperId, {
+      primaryCategory: summary.data.primaryCategory,
+      subcategories: summary.data.subcategories,
+      tags: summary.data.tags,
+      keywords: summary.data.keywords,
+      confidence: summary.data.confidence,
+      needsReview: summary.data.needsReview
+    });
+    await saveAnalysisArtifact(paperId, "classification", {
+      batchId: summary.data.batchId,
+      fileId: summary.data.fileId,
+      primaryCategory: summary.data.primaryCategory,
+      subcategories: summary.data.subcategories,
+      tags: summary.data.tags,
+      keywords: summary.data.keywords,
+      confidence: summary.data.confidence,
+      needsReview: summary.data.needsReview
+    });
 
     const recognition = deriveRecognitionState({
       title: extracted.title ?? paper.originalFileName,

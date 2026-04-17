@@ -132,6 +132,7 @@ export function UploadForm() {
         <h3>真实上传 + 本地处理 pipeline</h3>
         <ul className="clean-list">
           <li>PDF 会保存到本地 `data/papers/raw/`。</li>
+          <li>Markdown 会按 batch 目录保存到 `data/papers/extracted_markdown/&lt;batchId&gt;/年份_题目名.md`。</li>
           <li>上传前会按 PDF 内容去重，重复论文不会再次进入处理流程。</li>
           <li>一次可以上传多个 PDF，但后台会逐文件提取、逐文件发给 Hermes，不会混发。</li>
           <li>上传成功后立即创建论文记录并异步触发处理。</li>

@@ -42,6 +42,14 @@
 - Node 侧 Python 提取桥接改为可切换后端：`marker` / `pypdf` / `langchain`。
 - Marker 脚本现在会禁用图片导出，并自动把正文 markdown 保存到本地目录，便于直接查看正文结果。
 - Marker 脚本默认固定使用 `GPU 0`，并为引言/结论增加了无标题情况下的兜底提取逻辑，减少 `NOT_FOUND`。
+- Markdown 结果现在按 batch 目录保存，文件名格式调整为 `年份_题目名.md`，方便后续按批处理和理论推导问答复用。
+
+### 工作流升级
+
+- 上传后的正式主链路调整为：`PDF 上传 -> Marker 生成 markdown -> 单个 Hermes agent 一次输出详细论文分析 JSON + 受约束分类 -> 页面展示结果`。
+- `papers` 表新增 `markdown_path` 字段，详情页会显示 batch 编号和 markdown 存储路径。
+- 主分析 agent 现在会优先读取服务器落盘的 markdown 正文，不再只依赖摘要/结论轻载荷。
+- agent 输出改为单次完整 JSON，同时包含 `researchQuestion`、`coreMethod`、`experimentalMethodology`、`performanceMetrics` 等详细分析字段以及 taxonomy 分类字段。
 
 ## 2026-04-16
 

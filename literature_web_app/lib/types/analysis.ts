@@ -1,0 +1,24 @@
+export type PaperAnalysis = {
+  batchId: string;
+  fileId: string;
+  title: string;
+  researchQuestion: string;
+  coreMethod: string;
+  shortSummary: string;
+  coreContribution: string;
+  relevanceNote: string;
+  innovationNote: string;
+  whatThisPaperDoes: string[];
+  claimedInnovations: string[];
+  usefulToMyTopic: string[];
+  limitations: string[];
+  candidateIdeas: string[];
+  experimentalMethodology: string;
+  performanceMetrics: string[];
+  primaryCategory: string;
+  subcategories: string[];
+  tags: string[];
+  keywords: string[];
+  confidence: number;
+  needsReview: boolean;
+};

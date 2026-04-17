@@ -14,6 +14,7 @@ export type PythonPdfExtractionResult = {
   keywordsCandidate: string[];
   extractStatus: string;
   extractor: string;
+  markdownPath?: string;
   textCharCount: number;
   updatedAt: string;
   fullText: string;

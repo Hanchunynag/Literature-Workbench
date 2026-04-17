@@ -27,6 +27,7 @@ export function ensureSchema() {
       recognition_state TEXT NOT NULL DEFAULT 'pending',
       recognition_note TEXT,
       agent_processed INTEGER NOT NULL DEFAULT 0,
+      markdown_path TEXT,
       extracted_text TEXT,
       extracted_char_count INTEGER NOT NULL DEFAULT 0,
       error_message TEXT,
@@ -99,6 +100,10 @@ export function ensureSchema() {
 
   if (!hasColumn("papers", "agent_processed")) {
     db.exec(`ALTER TABLE papers ADD COLUMN agent_processed INTEGER NOT NULL DEFAULT 0;`);
+  }
+
+  if (!hasColumn("papers", "markdown_path")) {
+    db.exec(`ALTER TABLE papers ADD COLUMN markdown_path TEXT;`);
   }
 
   db.exec(`

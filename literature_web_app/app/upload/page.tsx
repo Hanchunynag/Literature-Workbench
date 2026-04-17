@@ -4,7 +4,7 @@ import { getPublicAgentProviders } from "@/lib/agent-catalog";
 
 const uploadSignals = [
   "上传 PDF 后立即创建论文记录并启动后台处理。",
-  "先做提取、论文关键信息总结、校验 3 个步骤，不扩展成复杂多 agent 系统。",
+  "服务器先用 Marker 生成 markdown，再由单个 agent 一次输出详细论文分析 JSON 和受约束分类。",
   "文献库和详情页都会直接读取真实数据库结果。"
 ];
 
