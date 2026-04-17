@@ -10,6 +10,8 @@ from pathlib import Path
 
 import extract_pdf_keyinfo as base_extractor
 
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
+
 try:
     from marker.config.parser import ConfigParser
     from marker.converters.pdf import PdfConverter

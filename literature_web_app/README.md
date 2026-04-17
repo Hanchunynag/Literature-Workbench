@@ -97,8 +97,15 @@ npm start
 
 - `PDF_EXTRACTOR_BACKEND=marker` 时，上传后的 PDF 会优先走 Marker 提取。
 - Marker 脚本会关闭图片提取，并把正文 markdown 自动保存到 `data/papers/extracted_markdown/` 或你指定的 `MARKER_MARKDOWN_DIR`。
+- Marker 脚本默认固定 `CUDA_VISIBLE_DEVICES=0`，会优先使用 `GPU 0` 跑转换。
 - 上传的 PDF、数据库和分析结果都会落到服务器本地 `data/` 目录。
 - 如果你服务器上跑本地模型，可以把 `HERMES_BASE_URL` 指向服务器本机模型地址。
+
+推荐测试命令：
+
+```bash
+python3 scripts/extract_pdf_keyinfo_marker.py --pdf "/绝对路径/你的论文.pdf"
+```
 
 ## 当前主链路
 

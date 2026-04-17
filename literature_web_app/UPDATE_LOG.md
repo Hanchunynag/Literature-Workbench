@@ -41,6 +41,7 @@
 - 新增 Marker 提取脚本，并通过 `PDF_EXTRACTOR_BACKEND=marker` 支持服务器端优先使用 Marker 解析 PDF。
 - Node 侧 Python 提取桥接改为可切换后端：`marker` / `pypdf` / `langchain`。
 - Marker 脚本现在会禁用图片导出，并自动把正文 markdown 保存到本地目录，便于直接查看正文结果。
+- Marker 脚本默认固定使用 `GPU 0`，并为引言/结论增加了无标题情况下的兜底提取逻辑，减少 `NOT_FOUND`。
 
 ## 2026-04-16
 

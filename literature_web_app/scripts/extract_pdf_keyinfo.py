@@ -325,6 +325,19 @@ def clean_paragraph_text(text: str, max_lines: int = 80) -> str:
     return out.strip()
 
 
+def split_meaningful_blocks(text: str) -> list[str]:
+    blocks = re.split(r"\n{2,}", normalize_text(text))
+    cleaned_blocks: list[str] = []
+
+    for block in blocks:
+        cleaned = clean_paragraph_text(block, max_lines=20)
+        if len(cleaned) < 80:
+            continue
+        cleaned_blocks.append(cleaned)
+
+    return cleaned_blocks
+
+
 def extract_abstract(text: str) -> str:
     abstract = extract_section_by_heading(
         text,
@@ -360,7 +373,22 @@ def extract_introduction_preview(text: str) -> str:
         ],
         max_chars=3500,
     )
-    return clean_paragraph_text(introduction, max_lines=35)
+    cleaned = clean_paragraph_text(introduction, max_lines=35)
+    if cleaned:
+        return cleaned
+
+    blocks = split_meaningful_blocks(text)
+    if not blocks:
+        return ""
+
+    start_index = 0
+    for index, block in enumerate(blocks[:6]):
+        if re.search(r"\babstract\b|摘\s*要", block, re.I):
+            start_index = index + 1
+            break
+
+    fallback = "\n\n".join(blocks[start_index:start_index + 2])
+    return clean_paragraph_text(fallback, max_lines=35)
 
 
 def extract_keywords_section(text: str) -> list[str]:
@@ -405,7 +433,17 @@ def extract_conclusion_preview(text: str) -> str:
         end_markers=["references", "acknowledg", "appendix"],
         max_chars=3500,
     )
-    return clean_paragraph_text(conclusion, max_lines=35)
+    cleaned = clean_paragraph_text(conclusion, max_lines=35)
+    if cleaned:
+        return cleaned
+
+    body_without_refs = re.split(r"\n(?:references|acknowledg(?:ement)?s?|appendix)\b", text, maxsplit=1, flags=re.I)[0]
+    blocks = split_meaningful_blocks(body_without_refs)
+    if len(blocks) < 2:
+        return ""
+
+    fallback = "\n\n".join(blocks[-2:])
+    return clean_paragraph_text(fallback, max_lines=35)
 
 
 def build_clean_summary(result: dict, abstract: str, introduction: str, conclusion: str) -> str:
