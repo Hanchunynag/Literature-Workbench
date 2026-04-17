@@ -6,14 +6,14 @@ import { ensureSchema } from "@/lib/db/schema";
 export const runtime = "nodejs";
 
 type RouteProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function GET(_: Request, { params }: RouteProps) {
   ensureSchema();
-  const { id } = params;
+  const { id } = await params;
   const status = getPaperStatusRecord(id);
 
   if (!status) {

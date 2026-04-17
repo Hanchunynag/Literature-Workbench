@@ -53,7 +53,7 @@ export const classifierPrompt = `
 15. 如果论文核心是 TOA/TDOA、DOA/AOA、Doppler/FDOA、伪距/载波相位、观测建模或位置解算创新，优先分到“定位方法创新”。
 16. JSON 必须包含这些字段：
    primaryCategory, subcategories, tags, keywords, confidence, needsReview
-17. 绝对不要联网搜索；如果模型自身有记忆能力可以保留，但最终判断必须以当前输入内容为主。
+17. 允许在必要时联网检索术语、背景或公开资料，但最终判断必须以当前输入内容为主，不能让联网信息替代论文证据。
 18. subcategories、tags、keywords 必须是 JSON 数组，不能是字符串。
 19. 输出 JSON 必须原样包含输入中给定的 batchId 和 fileId，不能修改、不能遗漏。
 20. 输出字段必须严格为：
@@ -105,8 +105,8 @@ export const summarizerPrompt = `
 3. 只输出一个合法 JSON 对象，不要输出额外解释、不要加 Markdown。
 4. 输出必须保守，只能写输入里能直接支持的内容；没有明确证据就留空或保守表述。
 5. 对算法名、方法名、缩写、专有术语，优先保留英文原名或“英文原名 + 缩写”。
-6. 如果没有公认中文译法，不要生硬直译。像 Matrix Pencil 这类术语，应保留为 `Matrix Pencil (MP)`，不要写成“矩阵铅笔”。
-7. 绝对不要联网搜索；如果模型自身有记忆能力可以保留，但最终输出必须以当前输入内容为主。
+6. 如果没有公认中文译法，不要生硬直译。像 Matrix Pencil 这类术语，应保留为 \`Matrix Pencil (MP)\`，不要写成“矩阵铅笔”。
+7. 允许在必要时联网检索术语、背景或公开资料，但最终输出必须以当前输入内容为主，不能让联网信息替代论文证据。
 8. 输出 JSON 必须原样包含输入中给定的 batchId 和 fileId，不能修改、不能遗漏。
 9. 你收到的正文输入协议是固定 JSON。优先依据其中 extracted_content.markdown_content 作答，并用 abstract / introduction_preview / conclusion_excerpt 互相校验；allow_guessing=false 时禁止脑补论文未提供内容。
 10. 分析字段和分类字段必须放在同一个 JSON 里，但分类内容不能污染事实分析字段。
@@ -184,7 +184,7 @@ export const summaryValidatorPrompt = `
 2. 你的职责是逐字段核对草稿是否被输入内容直接支持，并输出一份“修正后的最终 JSON”。
 3. 只要发现术语直译生硬、概念错误、结论过度延伸、把经验判断写成论文事实、或分类越界乱分，都要改正。
 4. 对算法名、方法名、缩写、专有术语，优先保留英文原名或“英文原名 + 缩写”。
-5. 如果没有公认中文译法，不要生硬直译。像 Matrix Pencil 这类术语，应保留为 `Matrix Pencil (MP)`。
+5. 如果没有公认中文译法，不要生硬直译。像 Matrix Pencil 这类术语，应保留为 \`Matrix Pencil (MP)\`。
 6. 如果某条内容无法从输入里直接支持，就删掉或改成更保守的表达。
 7. candidateIdeas 字段只允许写校验备注或不确定点；如果没有，就输出空数组。
 8. subcategories 只能从给定候选里选，最多 3 个；不允许发明新子类。

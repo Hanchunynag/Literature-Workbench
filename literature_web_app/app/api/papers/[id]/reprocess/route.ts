@@ -7,14 +7,14 @@ import { processPaper } from "@/lib/pipeline/process-paper";
 export const runtime = "nodejs";
 
 type RouteProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function POST(_: Request, { params }: RouteProps) {
   ensureSchema();
-  const { id } = params;
+  const { id } = await params;
   const paper = getPaperRecord(id);
 
   if (!paper) {
